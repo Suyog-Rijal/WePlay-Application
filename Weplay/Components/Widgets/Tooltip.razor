@@ -1,0 +1,59 @@
+﻿@namespace Weplay.Components.Widgets
+
+<div class="relative inline-block">
+    <div @attributes="AdditionalAttributes"
+         @onmouseenter="ShowTooltip"
+         @onmouseleave="HideTooltip"
+         @onclick="ToggleTooltip"
+         class="@WrapperClass">
+        @ChildContent
+    </div>
+    @if (IsVisible)
+    {
+            <div class="@TooltipClass"
+                 style="@TooltipStyle">
+            @Content
+            </div>
+    }
+</div>
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+    [Parameter]
+    public string Content { get; set; } = string.Empty;
+    [Parameter]
+    public string Position { get; set; } = "top";
+    [Parameter]
+    public string WrapperClass { get; set; } = string.Empty;
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    private bool IsVisible { get; set; } = false;
+    private string TooltipClass =>
+        $"absolute z-10 px-4 py-2 text-xs font-medium text-zinc-50 bg-zinc-900 " +
+        $"border border-zinc-700 rounded-md shadow-lg transition-all duration-200 min-w-40 " +
+        $"{GetPositionClass()} {(IsVisible ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none")}";
+    private string TooltipStyle => GetPositionStyle();
+    private void ShowTooltip() => IsVisible = true;
+    private void HideTooltip() => IsVisible = false;
+    private void ToggleTooltip() => IsVisible = !IsVisible;
+    private string GetPositionClass()
+    {
+        return Position.ToLower() switch
+        {
+            "bottom" => "top-full mt-2",
+            "left" => "right-full mr-2",
+            "right" => "left-full ml-2",
+            _ => "bottom-full mb-2"
+        };
+    }
+    private string GetPositionStyle()
+    {
+        return Position.ToLower() switch
+        {
+            "bottom" => "transform: translateX(-50%); left: 50%;",
+            "left" => "transform: translateY(-50%); top: 50%;",
+            "right" => "transform: translateY(-50%); top: 50%;",
+            _ => "transform: translateX(-50%); left: 50%;"
+        };
+    }
+}

@@ -1,0 +1,253 @@
+﻿@page "/signup"
+@using System.Diagnostics
+@using Weplay.Components.Widgets
+@using Weplay.Services
+@inject AuthService AuthService
+
+
+<div class="w-full max-w-md space-y-8 p-8">
+    <!-- Header -->
+    <div class="text-center">
+        <div class="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center">
+            <div class="absolute inset-0 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 opacity-20"></div>
+            <svg class="h-8 w-8 text-zinc-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+        </div>
+        <h1 class="hidden">Hidden element</h1>
+        <h1 class="text-2xl font-semibold text-zinc-50">Create an account</h1>
+        <p class="mt-2 text-sm text-zinc-400">Sign up to get started</p>
+    </div>   
+
+    <!-- Signup Form -->
+    <form id="signupForm" class="space-y-4" @onsubmit="HandleSubmit">
+        <div class="space-y-2">
+            <label for="fullname" class="text-sm font-medium text-zinc-300">Full name</label>
+            <div class="relative">
+                <input id="fullname"
+                type="text"
+                @bind="fullname"
+                @oninput="() => isError = false"
+                placeholder="Enter your full name"
+                required
+                class="h-12 w-full rounded-md border @(isError ? "border-red-700" : "border-zinc-700") bg-zinc-900 px-3 text-zinc-50 placeholder:text-zinc-500 focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 focus:outline-none" />
+                @if (isError && errorField == "fullname")
+                {
+                    <Tooltip Content="@errorMessage" Position="top">
+                        <svg class="-translate-y-1/2 absolute right-2 top-1/2 h-4 w-4 transform text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"></path>
+                        </svg>
+                    </Tooltip>
+                }
+            </div>
+        </div>
+
+        <div class="space-y-2">
+            <label for="email" class="text-sm font-medium text-zinc-300">Email address</label>
+            <div class="relative">
+                <input id="email"
+                type="email"
+                @bind="email"
+                @oninput="() => isError = false"
+                placeholder="Enter your email"
+                required
+                class="h-12 w-full rounded-md border @(isError && errorField == "email" ? "border-red-700" : "border-zinc-700") bg-zinc-900 px-3 text-zinc-50 placeholder:text-zinc-500 focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 focus:outline-none" />
+                @if (isError && errorField == "email")
+                {
+                    <Tooltip Content="@errorMessage" Position="top">
+                        <svg class="-translate-y-1/2 absolute right-2 top-1/2 h-4 w-4 transform text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"></path>
+                        </svg>
+                    </Tooltip>
+                }
+            </div>
+        </div>
+
+        <div class="space-y-2">
+            <label for="password" class="text-sm font-medium text-zinc-300">Password</label>
+            <div class="relative">
+                <input id="password"
+                type="password"
+                autocomplete="new-password"
+                @bind="password"
+                @oninput="() => isError = false"
+                placeholder="Enter your password"
+                required
+                class="h-12 w-full rounded-md border @(isError && errorField == "password" ? "border-red-700" : "border-zinc-700") bg-zinc-900 px-3 text-zinc-50 placeholder:text-zinc-500 focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 focus:outline-none" />
+                @if (isError && errorField == "password")
+                {
+                    <Tooltip Content="@errorMessage" Position="top">
+                        <svg class="-translate-y-1/2 absolute right-2 top-1/2 h-4 w-4 transform text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"></path>
+                        </svg>
+                    </Tooltip>
+                }
+            </div>
+        </div>
+
+        <div class="space-y-2">
+            <label for="confirmPassword" class="text-sm font-medium text-zinc-300">Confirm password</label>
+            <div class="relative">
+                <input id="confirmPassword"
+                type="password"
+                autocomplete="new-password"
+                @bind="confirmPassword"
+                @oninput="() => isError = false"
+                placeholder="Confirm your password"
+                required
+                class="h-12 w-full rounded-md border @(isError && errorField == "confirmPassword" ? "border-red-700" : "border-zinc-700") bg-zinc-900 px-3 text-zinc-50 placeholder:text-zinc-500 focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 focus:outline-none" />
+                @if (isError && errorField == "confirmPassword")
+                {
+                    <Tooltip Content="@errorMessage" Position="top">
+                        <svg class="-translate-y-1/2 absolute right-2 top-1/2 h-4 w-4 transform text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"></path>
+                        </svg>
+                    </Tooltip>
+                }
+            </div>
+        </div>
+
+        <button type="submit"
+        id="signupButton"
+        class="flex h-12 w-full cursor-pointer items-center justify-center rounded-md bg-zinc-50 font-medium text-zinc-900 transition-all duration-200 hover:bg-zinc-200">
+            @if (!isSubmitting)
+            {
+                <span id="signupButtonText">Sign up</span>
+            }
+            else
+            {
+                <div id="signupLoadingContent" class="flex items-center space-x-2">
+                    <div class="h-4 w-4 animate-spin rounded-full border-2 border-zinc-600 border-t-zinc-900"></div>
+                    <span>Signing up...</span>
+                </div>
+            }
+        </button>
+    </form>
+
+    <!-- Footer Links -->
+    <div class="space-y-2 text-center">
+        <p class="text-sm text-zinc-500">
+            Already have an account?
+            <a href="/login" class="cursor-pointer font-medium text-zinc-300 transition-colors hover:text-zinc-50">Login</a>
+        </p>
+    </div>
+
+    <!-- Security Indicators -->
+    <div class="flex items-center justify-center space-x-6 pt-4 text-zinc-500">
+        <div class="flex items-center space-x-1">
+            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+            <span class="text-xs">Encrypted</span>
+        </div>
+        <div class="flex items-center space-x-1">
+            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            <span class="text-xs">Secure</span>
+        </div>
+        <div class="flex items-center space-x-1">
+            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+            <span class="text-xs">Private</span>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private bool isSubmitting = false;
+    private string fullname = string.Empty;
+    private string email = string.Empty;
+    private string password = string.Empty;
+    private string confirmPassword = string.Empty;
+    private bool isError = false;
+    private string errorMessage = string.Empty;
+    private string errorField = string.Empty;
+
+    private async Task HandleSubmit()
+    {
+        isError = false;
+        errorField = string.Empty;
+        errorMessage = string.Empty;
+        isSubmitting = true;
+
+        if (!ValidateForm())
+        {
+            isSubmitting = false;
+            return;
+        }
+
+        var res = await AuthService.Register(fullname, email, password);
+        if (res == 1)
+        {
+            NavigationManager.NavigateTo("/verification");
+        }
+        else if (res == 0)
+        {
+            isError = true;
+            errorField = "email";
+            errorMessage = "Email already exists.";
+        }
+        else
+        {
+            isError = true;
+            errorField = "email"; 
+            errorMessage = "Registration failed. Please try again.";
+        }
+
+        isSubmitting = false;
+    }
+
+    private bool ValidateForm()
+    {
+        if (string.IsNullOrWhiteSpace(fullname) || fullname.Length < 2)
+        {
+            isError = true;
+            errorField = "fullname";
+            errorMessage = "Full name must be at least 2 characters.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains("@") || !email.Contains("."))
+        {
+            isError = true;
+            errorField = "email";
+            errorMessage = "Please enter a valid email address.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(password) || password.Length < 8)
+        {
+            isError = true;
+            errorField = "password";
+            errorMessage = "Password must be at least 8 characters.";
+            return false;
+        }
+
+        bool hasUpper = password.Any(char.IsUpper);
+        bool hasLower = password.Any(char.IsLower);
+        bool hasDigit = password.Any(char.IsDigit);
+        bool hasSpecial = password.Any(c => !char.IsLetterOrDigit(c));
+
+        if (!hasUpper || !hasLower || !hasDigit || !hasSpecial)
+        {
+            isError = true;
+            errorField = "password";
+            errorMessage = "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.";
+            return false;
+        }
+
+        if (password != confirmPassword)
+        {
+            isError = true;
+            errorField = "confirmPassword";
+            errorMessage = "Passwords do not match.";
+            return false;
+        }
+
+        return true;
+    }
+}

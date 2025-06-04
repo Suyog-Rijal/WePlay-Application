@@ -1,0 +1,37 @@
+﻿@page "/"
+@using Weplay.Services
+@inject AuthService AuthService
+@inject RoomService RoomService
+
+
+<div class="w-full max-w-md space-y-8 p-8">
+	<h1>This is home page </h1>
+
+	<AuthorizeView>
+		<Authorizing>Checking auth state</Authorizing>
+		<NotAuthorized>You are not authorized to view this page.</NotAuthorized>			
+		<Authorized>
+			<p>
+				Username: @context.User.Identity.Name
+			</p>
+
+			<button @onclick="handleLogout">
+				Logout
+			</button>
+		</Authorized>
+	</AuthorizeView>
+</div>
+
+@code {
+	private void handleLogout()
+	{
+		AuthService.Logout();
+		NavigationManager.NavigateTo("/login", replace:true);
+	}
+
+	protected override void OnInitialized()
+	{
+		RoomService.GetRoomsAsync();
+	}
+}
+

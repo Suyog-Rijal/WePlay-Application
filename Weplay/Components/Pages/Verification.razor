@@ -1,0 +1,236 @@
+﻿@page "/verification"
+@using System.Diagnostics
+@using Microsoft.Maui.Devices
+@using System.Web
+@using Weplay.Services
+@inject AuthService AuthService
+
+
+
+<div class="w-full max-w-md space-y-8 p-8">
+    <!-- Header -->
+    <div class="text-center">
+        <div class="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center">
+            <div class="absolute inset-0 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 opacity-20"></div>
+            <svg class="h-8 w-8 text-zinc-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+        </div>
+        <h1 class="hidden">Hidden element</h1>
+        <h1 class="text-2xl font-semibold text-zinc-50">Verify your email</h1>
+        <p class="mt-2 text-sm text-zinc-400">Enter the 6-digit code sent to @MaskEmail(email)</p>
+    </div>
+
+    <!-- Verification Form -->
+    <form id="verificationForm" class="space-y-4" @onsubmit="HandleSubmit">
+        <div class="space-y-2">
+            <label class="hidden text-sm font-medium text-zinc-300">Verification code</label>
+            <div class="flex justify-center space-x-2">
+                @for (int i = 0; i < 6; i++)
+                {
+                    int index = i;
+                    <input id="code-@index"
+                    type="text"
+                    maxlength="1"
+                    pattern="[0-9]"
+                    @bind="codeDigits[index]"
+                    @oninput="@(e => HandleInput(e, index))"
+                    @onpaste="@(e => HandlePaste())"
+                    @onpaste:preventDefault
+                    @onkeydown="@(e => HandleKeyDown(e, index))"
+                    placeholder="0"
+                    required
+                    class="h-12 w-12 text-center rounded-md border @(isError ? "border-red-700" : "border-zinc-700") bg-zinc-900 px-3 text-zinc-50 placeholder:text-zinc-500 focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 focus:outline-none" />
+                }
+            </div>
+            @if (isError)
+            {
+                <div class="text-center text-sm text-red-500">
+                    @errorMessage
+                </div>
+            }
+        </div>
+
+        <button type="submit"
+        id="verifyButton"
+        class="flex h-12 w-full cursor-pointer items-center justify-center rounded-md bg-zinc-50 font-medium text-zinc-900 transition-all duration-200 hover:bg-zinc-200">
+            @if (!isSubmitting)
+            {
+                <span id="verifyButtonText">Verify</span>
+            }
+            else
+            {
+                <div id="verifyLoadingContent" class="flex items-center space-x-2">
+                    <div class="h-4 w-4 animate-spin rounded-full border-2 border-zinc-600 border-t-zinc-900"></div>
+                    <span>Verifying...</span>
+                </div>
+            }
+        </button>
+    </form>
+
+    <!-- Resend Link and Back to Login Link -->
+    <div class="space-y-2 text-center">
+        <p class="text-sm text-zinc-500">
+            Didn't receive a code?
+            <button @onclick="HandleResend" class="cursor-pointer font-medium text-zinc-300 transition-colors hover:text-zinc-50">Resend code</button>
+        </p>
+        <p class="text-sm text-zinc-500">
+            <a href="/login" class="cursor-pointer font-medium text-zinc-300 transition-colors hover:text-zinc-50">Back to Login</a>
+        </p>
+    </div>
+
+    <!-- Security Indicators -->
+    <div class="flex items-center justify-center space-x-6 pt-4 text-zinc-500">
+        <div class="flex items-center space-x-1">
+            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+            <span class="text-xs">Encrypted</span>
+        </div>
+        <div class="flex items-center space-x-1">
+            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            <span class="text-xs">Secure</span>
+        </div>
+        <div class="flex items-center space-x-1">
+            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+            <span class="text-xs">Private</span>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isSubmitting = false;
+    private bool isError = false;
+    private string errorMessage = string.Empty;
+    private string email = string.Empty;
+    private string[] codeDigits = new string[6] { string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty };
+
+    protected override void OnInitialized()
+    {
+        var uri = new Uri(NavigationManager.Uri);
+        email = HttpUtility.ParseQueryString(uri.Query).Get("email") ?? string.Empty;
+    }
+
+    private string MaskEmail(string email)
+    {
+        if (string.IsNullOrEmpty(email) || !email.Contains("@"))
+            return "your email";
+
+        var parts = email.Split('@');
+        var localPart = parts[0];
+        var domain = parts[1];
+
+        if (localPart.Length <= 2)
+            return $"{localPart[0]}***@{domain}";
+
+        return $"{localPart[0]}********{localPart[^1]}@{domain}";
+    }
+
+    private async Task HandleSubmit()
+    {
+        isSubmitting = true;
+        isError = false;
+
+        if (codeDigits.Any(d => string.IsNullOrEmpty(d) || !char.IsDigit(d[0])))
+        {
+            isError = true;
+            errorMessage = "Please enter a valid 6-digit code";
+            isSubmitting = false;
+            return;
+        }
+
+        string code = string.Join("", codeDigits);
+        var res = await AuthService.EmailVerification(email, code);
+        isSubmitting = false;
+
+        if (res == 1)
+        {
+            NavigationManager.NavigateTo("/");
+            return;
+        }
+        else
+        {
+            isError = true;
+			errorMessage = "Invalid verification code. Please try again.";
+        }
+    }
+
+    private async Task HandleResend()
+    {
+        isSubmitting = true;
+        isError = false;
+        codeDigits = new string[6] { string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty };
+		var res = await AuthService.ResendVerification(email);
+        isSubmitting = false;
+    }
+
+    private void HandleInput(ChangeEventArgs e, int index)
+    {
+        isError = false;
+        string value = e.Value?.ToString() ?? "";
+        if (value.Length == 1 && char.IsDigit(value[0]))
+        {
+            codeDigits[index] = value;
+            if (index < 5)
+            {
+                JS.InvokeVoidAsync("focusInput", $"code-{index + 1}");
+            }
+        }
+        else
+        {
+            codeDigits[index] = string.Empty;
+        }
+        StateHasChanged();
+    }
+
+    private async Task HandlePaste()
+    {
+        isError = false;
+        string pastedText = await Clipboard.Default.GetTextAsync();
+        if (pastedText?.Length == 6 && pastedText.All(char.IsDigit))
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                codeDigits[i] = pastedText[i].ToString();
+            }
+            StateHasChanged();
+            await JS.InvokeVoidAsync("focusInput", "code-5");
+        }
+        else
+        {
+            isError = true;
+            errorMessage = "Please paste a valid 6-digit code";
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e, int index)
+    {
+        isError = false;
+        if (e.Key == "Backspace")
+        {
+            codeDigits[index] = string.Empty;
+            if (index > 0)
+            {
+                JS.InvokeVoidAsync("focusInput", $"code-{index - 1}");
+            }
+            StateHasChanged();
+        }
+    }
+
+    [Inject]
+    private IJSRuntime JS { get; set; } = default!;
+}
+
+<script>
+    function focusInput(id) {
+        const input = document.getElementById(id);
+        if (input) {
+            input.focus();
+        }
+    }
+</script>

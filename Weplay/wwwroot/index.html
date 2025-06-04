@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Weplay</title>
+    <base href="/" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="css/build.css" />
+    <link rel="stylesheet" href="Weplay.styles.css" />
+    <link rel="icon" href="data:,">
+</head>
+
+<body>
+
+    <div class="status-bar-safe-area"></div>
+
+    <div id="container" class="fixed inset-0 -z-50 overflow-hidden" style="background-color: #18181BFF;">
+        <canvas id="canvas" class="absolute inset-0 h-full w-full" style="pointer-events: none;"></canvas>
+    </div>
+
+    <div id="app" class="text-zinc-100"></div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.webview.js" autostart="false"></script>
+
+    <script>
+        const BACKGROUND_COLOR = "#18181BFF";
+        const NUM_PARTICLES = 50;
+        const MIN_SIZE = 0.5;
+        const MAX_SIZE = 3;
+        const MIN_SPEED = 0.01;
+        const MAX_SPEED = 0.05;
+        const FRICTION = 0.01;
+        const TWINKLE_CHANCE = 0.00002;
+        const TWINKLE_DURATION = 5000;
+        const TWINKLE_STRENGTH = 1;
+        const IMPULSE_RADIUS = 15;
+        const IMPULSE_STRENGTH = 0.8;
+        const GRAVITY_RADIUS = 10;
+        const GRAVITY_FORCE = 0.0005;
+        const GLOW_DISTANCE = 15;
+        const SIZE_INCREASE_FACTOR = 4;
+        const EXTRA_GLOW_MAX = 0.1;
+        const WEB_ENABLED = true;
+        const WEB_DISTANCE = 50;
+        const WEB_OPACITY_BASE = 0.5;
+        const WEB_OPACITY_VARIANCE = 0.8;
+        const MAX_CONNECTIONS_PER_PARTICLE = 5;
+        const WEB_THICKNESS = 0.3;
+        const AURORA_GLOW_SIZE = 4;
+        const AURORA_GLOW_OPACITY = 10;
+        const GLOW_IMAGE_SIZE = 10;
+
+        class Particle {
+            constructor(id, x, y, size, baseOpacity, vx, vy, baseSpeed) {
+                this.id = id;
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                this.baseOpacity = baseOpacity;
+                this.glowOpacity = 0;
+                this.isTwinkling = false;
+                this.twinkleStartTime = null;
+                this.vx = vx;
+                this.vy = vy;
+                this.baseSpeed = baseSpeed;
+            }
+        }
+
+        const canvas = document.getElementById("canvas");
+        const container = document.getElementById("container");
+        const ctx = canvas.getContext("2d", { alpha: true });
+        let mousePosition = null;
+        let animationFrameId = 0;
+        let lastTime = null;
+        const particles = [];
+        let glowImage = null;
+        const viewportSize = { width: 0, height: 0 };
+
+        // Initialize particles
+        for (let i = 0; i < NUM_PARTICLES; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * (MAX_SPEED - MIN_SPEED) + MIN_SPEED;
+            particles.push(new Particle(
+                i,
+                Math.random() * 100,
+                Math.random() * 100,
+                Math.random() * (MAX_SIZE - MIN_SIZE) + MIN_SIZE,
+                Math.random() * 0.3 + 0.1,
+                Math.cos(angle) * speed,
+                Math.sin(angle) * speed,
+                speed
+            ));
+        }
+
+        function createGlowImage() {
+            const glowCanvas = document.createElement("canvas");
+            glowCanvas.width = GLOW_IMAGE_SIZE;
+            glowCanvas.height = GLOW_IMAGE_SIZE;
+            const glowCtx = glowCanvas.getContext("2d");
+            if (!glowCtx) return;
+
+            const centerX = GLOW_IMAGE_SIZE / 2;
+            const centerY = GLOW_IMAGE_SIZE / 2;
+            const radius = GLOW_IMAGE_SIZE / 2;
+
+            const gradient = glowCtx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+            gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
+            gradient.addColorStop(0.2, "rgba(255, 255, 255, 0.8)");
+            gradient.addColorStop(0.5, "rgba(255, 255, 255, 0.3)");
+            gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+            glowCtx.fillStyle = gradient;
+            glowCtx.beginPath();
+            glowCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            glowCtx.fill();
+
+            glowImage = new Image();
+            glowImage.src = glowCanvas.toDataURL();
+        }
+
+        // Update canvas size
+        function updateCanvasSize() {
+            if (!container || !canvas) return;
+            const { width, height } = container.getBoundingClientRect();
+            viewportSize.width = width;
+            viewportSize.height = height;
+
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+            ctx.scale(dpr, dpr);
+        }
+
+        // Mouse event handlers
+        function handleMouseMove(e) {
+            mousePosition = {
+                x: (e.clientX / window.innerWidth) * 100,
+                y: (e.clientY / window.innerHeight) * 100
+            };
+        }
+
+        function handleClick(e) {
+            const clickX = (e.clientX / window.innerWidth) * 100;
+            const clickY = (e.clientY / window.innerHeight) * 100;
+
+            for (const particle of particles) {
+                const dx = particle.x - clickX;
+                const dy = particle.y - clickY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < IMPULSE_RADIUS && distance > 0) {
+                    const factor = 1 - distance / IMPULSE_RADIUS;
+                    const nx = dx / distance;
+                    const ny = dy / distance;
+                    particle.vx += nx * IMPULSE_STRENGTH * factor;
+                    particle.vy += ny * IMPULSE_STRENGTH * factor;
+                }
+            }
+        }
+
+        // Web connections processing
+        function processWebConnections(particles, width, height) {
+            const connectionCounts = new Map();
+            const connections = [];
+
+            for (let i = 0; i < particles.length; i++) {
+                const p1 = particles[i];
+                const p1x = (p1.x / 100) * width;
+                const p1y = (p1.y / 100) * height;
+
+                if (!connectionCounts.has(p1.id)) {
+                    connectionCounts.set(p1.id, 0);
+                }
+
+                for (let j = i + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const p2x = (p2.x / 100) * width;
+                    const p2y = (p2.y / 100) * height;
+
+                    if (!connectionCounts.has(p2.id)) {
+                        connectionCounts.set(p2.id, 0);
+                    }
+
+                    if (
+                        connectionCounts.get(p1.id) >= MAX_CONNECTIONS_PER_PARTICLE ||
+                        connectionCounts.get(p2.id) >= MAX_CONNECTIONS_PER_PARTICLE
+                    ) {
+                        continue;
+                    }
+
+                    const dx = p1x - p2x;
+                    const dy = p1y - p2y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < (WEB_DISTANCE * (p1.size + p2.size)) / 2) {
+                        const opacityFactor = 1 - distance / ((WEB_DISTANCE * (p1.size + p2.size)) / 2);
+                        const baseOpacity = (p1.baseOpacity + p2.baseOpacity) / 2;
+                        const webOpacity = baseOpacity * opacityFactor * (WEB_OPACITY_BASE + Math.random() * WEB_OPACITY_VARIANCE);
+                        connections.push([p1x, p1y, p2x, p2y, webOpacity]);
+                        connectionCounts.set(p1.id, connectionCounts.get(p1.id) + 1);
+                        connectionCounts.set(p2.id, connectionCounts.get(p2.id) + 1);
+                    }
+                }
+            }
+            return connections;
+        }
+
+        function drawWebConnections(ctx, connections) {
+            ctx.lineWidth = WEB_THICKNESS;
+            for (const [x1, y1, x2, y2, opacity] of connections) {
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+                ctx.stroke();
+            }
+        }
+
+        function isInViewport(x, y, size, width, height) {
+            const padding = size * AURORA_GLOW_SIZE;
+            return x + padding >= 0 && x - padding <= width && y + padding >= 0 && y - padding <= height;
+        }
+
+        // Animation loop
+        function updateParticles(timestamp) {
+            if (lastTime === null) {
+                lastTime = timestamp;
+            }
+            const dt = timestamp - lastTime;
+            lastTime = timestamp;
+            const dtFactor = dt / 50;
+
+            ctx.clearRect(0, 0, viewportSize.width, viewportSize.height);
+            ctx.fillStyle = BACKGROUND_COLOR;
+            ctx.fillRect(0, 0, viewportSize.width, viewportSize.height);
+
+            let webConnections = [];
+            if (WEB_ENABLED) {
+                webConnections = processWebConnections(particles, viewportSize.width, viewportSize.height);
+            }
+
+            for (const particle of particles) {
+                let newVx = particle.vx;
+                let newVy = particle.vy;
+
+                if (mousePosition && particle.size > (MIN_SIZE + MAX_SIZE) / 2) {
+                    const dx = mousePosition.x - particle.x;
+                    const dy = mousePosition.y - particle.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < GRAVITY_RADIUS && distance > 0) {
+                        const clampedDistance = Math.max(distance, 0.5);
+                        const factor = GRAVITY_FORCE * (GRAVITY_RADIUS / clampedDistance - 1);
+                        newVx += (dx / distance) * factor * dtFactor;
+                        newVy += (dy / distance) * factor * dtFactor;
+                    }
+                }
+
+                particle.x += newVx * dtFactor;
+                particle.y += newVy * dtFactor;
+
+                if (particle.x > 100) particle.x -= 100;
+                if (particle.x < 0) particle.x += 100;
+                if (particle.y > 100) particle.y -= 100;
+                if (particle.y < 0) particle.y += 100;
+
+                if (!particle.isTwinkling && Math.random() < TWINKLE_CHANCE) {
+                    particle.isTwinkling = true;
+                    particle.twinkleStartTime = timestamp;
+                }
+
+                if (particle.isTwinkling && particle.twinkleStartTime) {
+                    const timeSinceStart = timestamp - particle.twinkleStartTime;
+                    if (timeSinceStart >= TWINKLE_DURATION) {
+                        particle.isTwinkling = false;
+                        particle.twinkleStartTime = null;
+                        particle.glowOpacity = 0;
+                    } else {
+                        const phase = Math.sin((timeSinceStart / TWINKLE_DURATION) * Math.PI);
+                        particle.glowOpacity = phase * TWINKLE_STRENGTH;
+                    }
+                }
+
+                const currentSpeed = Math.sqrt(newVx * newVx + newVy * newVy);
+                if (currentSpeed > 0) {
+                    const dampingFactor = FRICTION;
+                    const targetSpeed = particle.baseSpeed;
+                    const newSpeed = currentSpeed + (targetSpeed - currentSpeed) * dampingFactor;
+                    const scale = newSpeed / currentSpeed;
+                    particle.vx = newVx * scale;
+                    particle.vy = newVy * scale;
+                }
+            }
+
+            if (WEB_ENABLED && webConnections.length > 0) {
+                drawWebConnections(ctx, webConnections);
+            }
+
+            if (glowImage) {
+                for (const particle of particles) {
+                    const x = (particle.x / 100) * viewportSize.width;
+                    const y = (particle.y / 100) * viewportSize.height;
+
+                    if (!isInViewport(x, y, particle.size, viewportSize.width, viewportSize.height)) continue;
+
+                    let computedGlow = particle.glowOpacity;
+
+                    if (mousePosition) {
+                        const dx = mousePosition.x - particle.x;
+                        const dy = mousePosition.y - particle.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < GLOW_DISTANCE) {
+                            const proximityFactor = 1 - distance / GLOW_DISTANCE;
+                            computedGlow = Math.min(particle.glowOpacity + proximityFactor * EXTRA_GLOW_MAX, 1);
+                        }
+                    }
+
+                    if ((particle.isTwinkling || computedGlow > 0) && glowImage) {
+                        const glowSize = particle.size * AURORA_GLOW_SIZE * computedGlow;
+                        if (glowSize < 1) continue;
+
+                        ctx.globalAlpha = computedGlow * AURORA_GLOW_OPACITY;
+                        const drawSize = glowSize * 2;
+                        ctx.drawImage(glowImage, x - drawSize / 2, y - drawSize / 2, drawSize, drawSize);
+                        ctx.globalAlpha = 1.0;
+                    }
+                }
+            }
+
+            for (const particle of particles) {
+                const x = (particle.x / 100) * viewportSize.width;
+                const y = (particle.y / 100) * viewportSize.height;
+
+                if (!isInViewport(x, y, particle.size, viewportSize.width, viewportSize.height)) continue;
+
+                let computedSize = particle.size;
+                let computedGlow = particle.glowOpacity;
+
+                if (mousePosition) {
+                    const dx = mousePosition.x - particle.x;
+                    const dy = mousePosition.y - particle.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < GLOW_DISTANCE) {
+                        const proximityFactor = 1 - distance / GLOW_DISTANCE;
+                        computedSize = particle.size * (1 + proximityFactor * SIZE_INCREASE_FACTOR);
+                        computedGlow = Math.min(particle.glowOpacity + proximityFactor * EXTRA_GLOW_MAX, 1);
+                    }
+                }
+
+                const opacity = particle.baseOpacity + computedGlow;
+
+                ctx.beginPath();
+                ctx.arc(x, y, computedSize, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+                ctx.fill();
+            }
+
+            animationFrameId = requestAnimationFrame(updateParticles);
+        }
+
+        // Initialize
+        createGlowImage();
+        updateCanvasSize();
+        window.addEventListener("resize", updateCanvasSize);
+        window.addEventListener("mousemove", handleMouseMove);
+        window.addEventListener("click", handleClick);
+        animationFrameId = requestAnimationFrame(updateParticles);
+
+        // Cleanup
+        window.addEventListener("unload", () => {
+            cancelAnimationFrame(animationFrameId);
+            window.removeEventListener("resize", updateCanvasSize);
+            window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("click", handleClick);
+        });
+    </script>
+
+</body>
+
+</html>
