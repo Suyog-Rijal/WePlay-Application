@@ -386,6 +386,18 @@
         });
     </script>
 
+    <script>
+        window.addOutsideClickHandler = (formElement, dropdownElement, dotNetHelper) => {
+            document.addEventListener('click', (event) => {
+                const isOutsideForm = !formElement.contains(event.target);
+                const isOutsideDropdown = !dropdownElement.contains(event.target);
+                if (isOutsideForm || isOutsideDropdown) {
+                    dotNetHelper.invokeMethodAsync('HandleOutsideClick', isOutsideForm);
+                }
+            });
+        };
+    </script>
+
 </body>
 
 </html>

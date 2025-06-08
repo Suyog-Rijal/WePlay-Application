@@ -11,9 +11,9 @@
     overflow: auto;
 }
 
-    .scrollbar::-webkit-scrollbar {
-        display: none;
-    }
+.scrollbar::-webkit-scrollbar {
+    display: none;
+}
 
 
 @keyframes pulse-fade {
@@ -141,5 +141,42 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+
+/*::-webkit-scrollbar {
+    display: none;
+}
+
+body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+*/
+
+
+.animate-shimmer {
+    position: relative;
+    overflow: hidden;
+}
+
+.animate-shimmer-bg {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient( 90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100% );
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
     }
 }

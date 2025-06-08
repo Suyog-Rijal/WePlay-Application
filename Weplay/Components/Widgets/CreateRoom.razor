@@ -1,0 +1,148 @@
+﻿@namespace Weplay.Components.Widgets
+@implements IDisposable
+@inject IJSRuntime JSRuntime
+
+<div class="absolute inset-0 z-50 flex h-screen w-full items-center justify-center bg-zinc-900/95 backdrop-blur-sm" @ref="formRef">
+    <div class="w-full max-w-md rounded-xl border border-zinc-800/50 bg-zinc-900 p-8 shadow-xl">
+        <div class="flex items-center justify-between">
+            <h2 class="text-2xl font-semibold text-zinc-50">Create a New Room</h2>
+            <button @onclick="OnClose" class="rounded-full p-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 focus:ring-2 focus:ring-zinc-600 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:outline-none">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="mt-8 space-y-4">
+            <div class="space-y-2">
+                <label for="name" class="text-sm font-medium text-zinc-300">Room Name</label>
+                <input id="name" type="text" required
+                       class="h-12 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-zinc-50 placeholder:text-zinc-500 focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 focus:outline-none"
+                       placeholder="Enter room name" />
+            </div>
+
+            <div class="space-y-2">
+                <label for="description" class="text-sm font-medium text-zinc-300">Description</label>
+                <textarea id="description" rows="4"
+                          class="h-24 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-50 placeholder:text-zinc-500 focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 focus:outline-none"
+                          placeholder="Describe your room"></textarea>
+            </div>
+
+            <div class="space-y-2">
+                <label for="category" class="text-sm font-medium text-zinc-300">Category</label>
+                <div class="relative" @ref="dropdownRef">
+                    <button @onclick="ToggleDropdown" id="category"
+                            class="h-12 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-left text-zinc-50 focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 focus:outline-none">
+                        <span>@(selectedCategory ?? "Select a category")</span>
+                        <svg class="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 transform text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    @if (isDropdownOpen)
+                    {
+                        <div class="absolute z-10 mt-1 w-full rounded-md border border-zinc-700 bg-zinc-900 shadow-lg">
+                            @foreach (var category in categories)
+                            {
+                                <button @onclick="() => SelectCategory(category)" 
+                                        class="block w-full px-3 py-2 text-left text-sm text-zinc-50 hover:bg-zinc-800 focus:outline-none">
+                                    @category
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label for="max_participants" class="text-sm font-medium text-zinc-300">Max Participants</label>
+                <input id="max_participants" type="number" min="1" required
+                       class="h-12 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-zinc-50 placeholder:text-zinc-500 focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 focus:outline-none"
+                       placeholder="Enter max participants" />
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button @onclick="ToggleCheckbox" class="relative h-4 w-4 rounded border border-zinc-700 bg-zinc-900 focus:ring-1 focus:ring-emerald-500 focus:ring-offset-1 focus:ring-offset-zinc-900 focus:outline-none">
+                    @if (isPublic)
+                    {
+                        <svg class="absolute top-1/2 left-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    }
+                </button>
+                <label for="is_public" class="text-sm font-medium text-zinc-300">Public Room</label>
+            </div>
+
+            <div class="flex space-x-3 pt-4">
+                <button class="h-12 flex-1 rounded-md bg-zinc-50 px-4 text-sm font-medium text-zinc-900 transition-all duration-200 hover:bg-zinc-200 focus:ring-2 focus:ring-zinc-600 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:outline-none">
+                    Create Room
+                </button>
+                <button @onclick="OnClose" class="h-12 flex-1 rounded-md border border-zinc-700 bg-zinc-900 px-4 text-sm font-medium text-zinc-300 transition-all duration-200 hover:bg-zinc-800 hover:text-zinc-50 focus:ring-2 focus:ring-zinc-600 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:outline-none">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public bool IsCreateRoomVisible { get; set; }
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    private bool isDropdownOpen = false;
+    private string? selectedCategory = null;
+    private bool isPublic = true;
+    private readonly List<string> categories = new() { "Movie", "TV Show", "Anime", "Live Event" };
+    private ElementReference dropdownRef;
+    private ElementReference formRef;
+    private DotNetObjectReference<CreateRoom>? dotNetRef;
+
+    private void ToggleDropdown()
+    {
+        isDropdownOpen = !isDropdownOpen;
+    }
+
+    private void SelectCategory(string category)
+    {
+        selectedCategory = category;
+        isDropdownOpen = false;
+    }
+
+    private void ToggleCheckbox()
+    {
+        isPublic = !isPublic;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("addOutsideClickHandler", formRef, dropdownRef, dotNetRef);
+        }
+    }
+
+    [JSInvokable]
+    public void HandleOutsideClick(bool isOutsideForm)
+    {
+        if (isOutsideForm)
+        {
+            if (IsCreateRoomVisible)
+            {
+                OnClose.InvokeAsync();
+            }
+        }
+        else if (isDropdownOpen)
+        {
+            isDropdownOpen = false;
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        dotNetRef?.Dispose();
+    }
+}

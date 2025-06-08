@@ -3,7 +3,8 @@
   "BuildFiles": [
     {
       "Input": "tailwind.css",
-      "Output": "wwwroot\\css\\build.css"
+      "Output": "wwwroot\\css\\build.css",
+      "Behavior": "Default"
     }
   ],
   "PackageConfigurationFile": null,

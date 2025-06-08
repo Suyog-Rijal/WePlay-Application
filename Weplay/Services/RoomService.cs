@@ -19,21 +19,15 @@ namespace Weplay.Services
                 if (response.IsSuccessStatusCode)
                 {
                     var rooms = await response.Content.ReadFromJsonAsync<List<RoomGetDto>>();
-                    foreach (var each in rooms)
-                    {
-                        Debug.WriteLine($"Room name: {each.name}");
-                    }
+                   
                     return rooms ?? new List<RoomGetDto>();
                 }
-                else
-                {
-                    return null;
-                }
+                return new List<RoomGetDto>();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error fetching rooms: {ex.Message}");
-                return null;
+                return new List<RoomGetDto>();
             }
         }
     }

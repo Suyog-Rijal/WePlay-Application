@@ -11,21 +11,24 @@ namespace Weplay.Dtos.Room
         public Guid id { get; set; }
         public string name { get; set; }
         public string description { get; set; }
-        public string category { get; set; }
         public bool is_full { get; set; }
+        public int total_participants { get; set; }
+        public Content content { get; set; }
         public Host host { get; set; }
-        public List<Participant> participants { get; set; } = new List<Participant>();
     }
 
     public class Host
     {
-        public Guid id { get; set; }
+        public int id { get; set; }
         public string full_name { get; set; }
     }
 
-    public class Participant
+    public class Content
     {
         public Guid id { get; set; }
-        public string full_name { get; set; }
+        public string title { get; set; }
+        public string url { get; set; }
+        public string image_url { get; set; }
+        public int duration { get; set; }
     }
 }

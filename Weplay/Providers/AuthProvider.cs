@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Net.Http.Json;
 using System.Diagnostics;
 using Weplay.Dtos.Auth;
+using Microsoft.Maui.Controls.PlatformConfiguration;
 
 namespace Weplay.Providers
 {
@@ -32,6 +33,7 @@ namespace Weplay.Providers
                     new Claim("token", res.token),
                     new Claim("profile_picture", res.profile_picture ?? string.Empty)
                 }, "auth-identity");
+                Config.client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", res.token);
                 var principal = new ClaimsPrincipal(identity);
                 return new AuthenticationState(principal);
             }
@@ -45,7 +47,6 @@ namespace Weplay.Providers
         public async Task LoginAsync(LoginResponseDto dto)
         {
             await SecureStorage.SetAsync("auth_token", dto.token);
-
             var identity = new ClaimsIdentity(new[]
             {
                 new Claim(ClaimTypes.Name, dto.full_name),
@@ -54,6 +55,8 @@ namespace Weplay.Providers
                 new Claim("profile_picture", dto.profile_picture ?? string.Empty)
 
             }, "auth-identit");
+            Config.client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", dto.token);
+
 
             var principal = new ClaimsPrincipal(identity);
             var authstate = new AuthenticationState(principal);
