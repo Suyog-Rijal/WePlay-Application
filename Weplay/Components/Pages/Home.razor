@@ -143,7 +143,7 @@
             }
             else
             {
-                <div class="flex items-center justify-between border-b border-zinc-700/50 p-4">
+                <div class="mb-2 flex items-center justify-between p-4">
                     <div>
                         <h1 class="text-lg font-semibold text-zinc-50">Public Rooms</h1>
                         <p class="hidden text-xs text-zinc-400 sm:block">Join ongoing watch parties or discover new content</p>
@@ -159,10 +159,10 @@
                 <div class="grid h-full w-full grid-cols-1 gap-4 px-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     @foreach (var room in rooms)
                     {
-                        <div class="group relative flex h-96 flex-col overflow-hidden rounded-xl border border-zinc-800/50 bg-zinc-900 transition-all duration-300 hover:border-zinc-700/50 hover:shadow-xl hover:shadow-zinc-900/20">
+                        <div class="group relative flex h-96 flex-col overflow-hidden rounded-xl border border-zinc-800/50 transition-all duration-300 hover:border-zinc-700/50 hover:shadow-xl hover:shadow-zinc-900/20">
                             <div class="relative h-48 flex-shrink-0 overflow-hidden">
                                 <div class="aspect-[16/9] h-full w-full">
-                                    <img loading="lazy" src="@(room.content?.image_url ?? "/images/waiting.jpg?height=192&width=341")"
+                                    <img loading="lazy" src="@(room.content?.thumbnail ?? "/images/waiting.jpg?height=192&width=341")"
                                     alt="@(room.content?.title ?? "No Title")"
                                     class="h-full w-full object-cover transition-all duration-500 group-hover:scale-105" />
                                 </div>
@@ -291,11 +291,18 @@
     private string FormatDuration(int durationInSeconds)
     {
         if (durationInSeconds <= 0) return "N/A";
+
         var timeSpan = TimeSpan.FromSeconds(durationInSeconds);
+
         if (timeSpan.TotalHours >= 1)
-            return $"{(int)timeSpan.TotalHours}h {timeSpan.Minutes}m";
-        return $"{timeSpan.Minutes}m";
+            return $"{(int)timeSpan.TotalHours}h {timeSpan.Minutes}m {timeSpan.Seconds}s";
+
+        if (timeSpan.TotalMinutes >= 1)
+            return $"{timeSpan.Minutes}m {timeSpan.Seconds}s";
+
+        return $"{timeSpan.Seconds}s";
     }
+
 
     // Direct join system
     private bool isDirectJoining { get; set; } = false;

@@ -2,6 +2,7 @@
 @using Weplay.Dtos.Youtube
 @using Weplay.Services
 @inject YoutubeService YoutubeService
+@inject RoomService RoomService
 
 <div class="flex h-screen w-full flex-col overflow-hidden text-zinc-100">
     <!-- Header -->
@@ -23,12 +24,12 @@
                     <div class="relative flex-1">
                         <div class="flex rounded-l-full border border-zinc-700 bg-zinc-800 transition-colors focus-within:border-blue-500">
                             <input id="searchInput"
-                                   class="placeholder-zinc-400 w-full rounded-l-full bg-transparent px-4 py-2 text-zinc-100 outline-none"
-                                   type="search"
-                                   value="@searchQuery"
-                                   @oninput="OnInputChanged"
-                                   placeholder="Search"
-                                   autocomplete="off" />
+                            class="placeholder-zinc-400 w-full rounded-l-full bg-transparent px-4 py-2 text-zinc-100 outline-none"
+                            type="search"
+                            value="@searchQuery"
+                            @oninput="OnInputChanged"
+                            placeholder="Search"
+                            autocomplete="off" />
                         </div>
                     </div>
 
@@ -59,8 +60,8 @@
                     <div class="group w-full">
                         <div class="relative mb-3 cursor-pointer overflow-hidden rounded-xl">
                             <img src=@each.thumbnail
-                                 alt="Video Thumbnail"
-                                 class="aspect-video w-full object-cover transition-transform duration-200" />
+                            alt="Video Thumbnail"
+                            class="aspect-video w-full object-cover transition-transform duration-200" />
                             <div class="bg-opacity-80 absolute right-2 bottom-2 rounded bg-black px-2 py-1 text-xs font-medium text-white">
                                 @each.duration
                             </div>
@@ -68,8 +69,8 @@
                         <div class="flex gap-3">
                             <div class="flex-shrink-0">
                                 <img src="@each.channel_avatar"
-                                     alt=""
-                                     class="h-9 w-9 cursor-pointer rounded-full transition-shadow hover:shadow-lg" />
+                                alt=""
+                                class="h-9 w-9 cursor-pointer rounded-full transition-shadow hover:shadow-lg" />
                             </div>
                             <div class="min-w-0 flex-1">
                                 <h3 class="mb-1 line-clamp-2 cursor-pointer text-sm font-medium transition-colors hover:text-zinc-300">
@@ -120,5 +121,25 @@
             }
         }
         catch (TaskCanceledException) { }
+    }
+
+    // Update content system
+    private bool isUpdatingContent = false;
+    private string videoIdToUpdate = string.Empty;
+    private async Task UpdateContent(string videoId)
+    {
+        if (isUpdatingContent || string.IsNullOrWhiteSpace(videoId))return;
+        videoIdToUpdate = videoId;
+
+        isUpdatingContent = true;
+        var res = await RoomService.UpdateContent(videoId);
+		isUpdatingContent = false;
+
+        if (res == 1)
+        {
+            NavigationManager.NavigateTo("/room");
+            return;
+        }
+
     }
 }

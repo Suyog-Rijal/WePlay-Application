@@ -29,7 +29,7 @@ namespace Weplay.Dtos.Room
         public Guid id { get; set; }
         public string title { get; set; }
         public string url { get; set; }
-        public string image_url { get; set; }
+        public string thumbnail { get; set; }
         public int duration { get; set; }
     }
 }

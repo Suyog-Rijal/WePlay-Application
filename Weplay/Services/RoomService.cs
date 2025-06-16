@@ -129,5 +129,29 @@ namespace Weplay.Services
                 return 0;
             }
         }
+
+        public async Task<int> UpdateContent(string videoId)
+        {
+            try
+            {
+                var data = new Dictionary<string, string>
+                {
+                    { "video_id", videoId }
+                };
+
+                var payload = new FormUrlEncodedContent(data);
+                var response = await Config.client.PostAsync($"{Config.ROOMSURL}update-content/{Config.ROOMID}/", payload);
+                if (response.IsSuccessStatusCode)
+                {
+                    return 1;
+                }
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error updating content: {ex.Message}");
+                return 0;
+            }
+        }
     }
 }
