@@ -21,7 +21,7 @@ namespace Weplay.Services
                 if (response.IsSuccessStatusCode)
                 {
                     var rooms = await response.Content.ReadFromJsonAsync<List<RoomGetDto>>();
-                   
+
                     return rooms ?? new List<RoomGetDto>();
                 }
                 return new List<RoomGetDto>();
@@ -62,6 +62,70 @@ namespace Weplay.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Error creating room: {ex.Message}");
+                return 0;
+            }
+        }
+
+        public async Task<int> DestroyRoom()
+        {
+            try
+            {
+                var response = await Config.client.PostAsync($"{Config.ROOMSURL}destroy/{Config.ROOMID}/", null);
+                if (response.IsSuccessStatusCode)
+                {
+                    Config.ROOMID = Guid.Empty;
+                    Config.ISHOST = false;
+                    return 1;
+                }
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error destroying room: {ex.Message}");
+                return 0;
+            }
+        }
+
+        public async Task<int> ExitRoom()
+        {
+            try
+            {
+                var response = await Config.client.PostAsync($"{Config.ROOMSURL}exit/{Config.ROOMID}/", null);
+                if (response.IsSuccessStatusCode)
+                {
+                    Config.ROOMID = Guid.Empty;
+                    Config.ISHOST = false;
+                    return 1;
+                }
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error Exiting room: {ex.Message}");
+                return 0;
+            }
+        }
+
+        public async Task<int> DirectJoinRoomAsync(Guid roomId)
+        {
+            try
+            {
+                var response = await Config.client.PostAsync($"{Config.ROOMSURL}direct-join/{roomId}/", null);
+                if (response.IsSuccessStatusCode)
+                {
+                    var data = await response.Content.ReadFromJsonAsync<JoinRoomDto>();
+                    if (data != null)
+                    {
+                        Config.ISHOST = data.is_host;
+                        Config.ROOMID = data.room_id;
+                        return 1;
+                    }
+                }
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error joining room: {ex.Message}");
                 return 0;
             }
         }

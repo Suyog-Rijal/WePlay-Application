@@ -1,0 +1,104 @@
+﻿@namespace Weplay.Components.Widgets
+@using Weplay.Services
+@inject RoomService RoomService
+
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/60">
+    <div class="w-[480px] rounded-lg bg-zinc-950 p-6 shadow-lg">
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-zinc-50">Leave Room?</h2>
+            <button @onclick="OnClose" class="p-1 text-zinc-400 hover:text-zinc-200 focus:outline-none">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="mt-4 space-y-4">
+            <p class="text-sm text-zinc-300">Confirm your action below:</p>
+            <div class="space-y-2">
+                <div class="flex items-start gap-2">
+                    <span class="text-red-500">•</span>
+                    <p class="text-xs text-zinc-400"><span class="font-medium text-zinc-300">Exit:</span> You will leave the room, but the room remains active for others.</p>
+                </div>
+                @if (Config.ISHOST)
+                {
+                    <div class="flex items-start gap-2">
+                        <span class="text-purple-500">•</span>
+                        <p class="text-xs text-zinc-400"><span class="font-medium text-zinc-300">Destroy Room:</span> The room will end, and all participants will be disconnected.</p>
+                    </div>
+                }
+                <div class="flex items-start gap-2">
+                    <span class="text-zinc-500">•</span>
+                    <p class="text-xs text-zinc-400"><span class="font-medium text-zinc-300">Cancel:</span> Stay in the room, no changes will be made.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 flex gap-3">
+            <button type="button" @onclick="HandleExit" disabled="@(isExiting || isDestroying)"
+                    class="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-red-700/80 px-4 text-sm font-medium text-zinc-50 hover:bg-red-700 focus:outline-none disabled:opacity-50">
+                @if (isExiting)
+                {
+                    <div class="h-4 w-4 animate-spin rounded-full border-2 border-zinc-600 border-t-zinc-900"></div>
+                    <span>Exiting</span>
+                }
+                else
+                {
+                    <span>Exit</span>
+                }
+            </button>
+            @if (Config.ISHOST)
+            {
+                <button type="button" @onclick="HandleDestroy" disabled="@(isExiting || isDestroying)"
+                class="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-purple-700/80 px-4 text-sm font-medium text-zinc-50 hover:bg-purple-700 focus:outline-none disabled:opacity-50">
+                    @if (isDestroying)
+                    {
+                        <div class="h-4 w-4 animate-spin rounded-full border-2 border-zinc-600 border-t-zinc-900"></div>
+                        <span>Destroying</span>
+                    }
+                    else
+                    {
+                        <span>Destroy Room</span>
+                    }
+
+                </button>
+            }
+            <button type="button" @onclick="OnClose" disabled="@(isExiting || isDestroying)"
+            class="h-10 flex-1 rounded-md border border-zinc-700 bg-transparent px-4 text-sm font-medium text-zinc-300 hover:bg-zinc-800 focus:outline-none disabled:opacity-50">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+    private bool isDestroying = false;
+    private bool isExiting = false;
+
+    private async Task HandleExit()
+    {
+        if (isExiting || isDestroying) return;
+        isExiting = true;
+        var res = await RoomService.ExitRoom();
+        await OnClose.InvokeAsync();
+        isExiting = false;
+        if (res == 1)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task HandleDestroy()
+    {
+        if (isExiting || isDestroying) return;
+        isDestroying = true;
+        var res = await RoomService.DestroyRoom();
+        await OnClose.InvokeAsync();
+        isDestroying = false;
+        if (res == 1)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+}

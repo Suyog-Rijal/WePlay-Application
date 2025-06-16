@@ -27,7 +27,7 @@
 
                 <div class="hidden items-center space-x-4 md:flex">
                     <button @onclick="() => isCreateRoomVisible = !isCreateRoomVisible"
-                            class="group flex items-center space-x-2 rounded-md bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-900 transition-all duration-200 hover:bg-zinc-200 focus:ring-2 focus:ring-zinc-600 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:outline-none">
+                    class="group flex items-center space-x-2 rounded-md bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-900 transition-all duration-200 hover:bg-zinc-200 focus:ring-2 focus:ring-zinc-600 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:outline-none">
                         <span>Create Room</span>
                         <svg class="h-4 w-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -133,7 +133,7 @@
                     <p class="text-lg font-semibold text-zinc-200">No active sessions found</p>
                     <p class="mt-2 text-sm text-zinc-400">Be the first one to create a room!</p>
                     <button class="mt-4 flex items-center space-x-2 rounded-md bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-900 transition-all duration-200 hover:bg-zinc-200 focus:ring-2 focus:ring-zinc-600 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:outline-none"
-                            @onclick="() => isCreateRoomVisible = true">
+                    @onclick="() => isCreateRoomVisible = true">
                         <span>Create Room</span>
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -163,8 +163,8 @@
                             <div class="relative h-48 flex-shrink-0 overflow-hidden">
                                 <div class="aspect-[16/9] h-full w-full">
                                     <img loading="lazy" src="@(room.content?.image_url ?? "/images/waiting.jpg?height=192&width=341")"
-                                         alt="@(room.content?.title ?? "No Title")"
-                                         class="h-full w-full object-cover transition-all duration-500 group-hover:scale-105" />
+                                    alt="@(room.content?.title ?? "No Title")"
+                                    class="h-full w-full object-cover transition-all duration-500 group-hover:scale-105" />
                                 </div>
                                 <div class="bg-gradient-to-t absolute inset-0 from-zinc-900/95 via-zinc-900/40 to-zinc-900/30" />
                                 <div class="absolute bottom-0 left-0 w-[80%] p-4">
@@ -223,9 +223,19 @@
                                 </div>
                             </div>
                             <div class="mt-auto px-4 pb-4">
-                                <button disabled="@room.is_full"
-                                        class="w-full rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-300 @(room.is_full ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" : "bg-zinc-800 text-zinc-100 hover:text-zinc-900 hover:bg-zinc-100 hover:shadow-lg active:scale-[0.98]")">
-                                    @(room.is_full ? "Room Full" : "Join Room")
+                                <button disabled="@room.is_full" @onclick="@(() => HandelDirectJoin(room.id))"
+                                class="w-full rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-300 flex justify-center items-center @(room.is_full ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" : "bg-zinc-800 text-zinc-100 hover:text-zinc-900 hover:bg-zinc-100 hover:shadow-lg active:scale-[0.98]")">
+                                    @if (isDirectJoining && currentJoiningRoomId == room.id)
+                                    {
+                                        <div id="emailLoadingContent" class="flex items-center space-x-2">
+                                            <div class="h-4 w-4 animate-spin rounded-full border-2 border-zinc-600 border-t-zinc-900"></div>
+                                            <span>Joining...</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        @(room.is_full ? "Room Full" : "Join Room")
+                                    }
                                 </button>
                             </div>
                             <div class="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -269,13 +279,13 @@
     private string? errorMessage;
     private List<RoomGetDto> rooms = new();
     private string? userName = String.Empty;
-	private bool isCreateRoomVisible = false;
+    private bool isCreateRoomVisible = false;
 
     protected override async Task OnInitializedAsync()
     {
         isLoading = true;
         rooms = await RoomService.GetRoomsAsync();
-		isLoading = false;
+        isLoading = false;
     }
 
     private string FormatDuration(int durationInSeconds)
@@ -285,5 +295,24 @@
         if (timeSpan.TotalHours >= 1)
             return $"{(int)timeSpan.TotalHours}h {timeSpan.Minutes}m";
         return $"{timeSpan.Minutes}m";
+    }
+
+    // Direct join system
+    private bool isDirectJoining { get; set; } = false;
+    private Guid currentJoiningRoomId { get; set; } = Guid.Empty;
+    public async Task HandelDirectJoin(Guid id)
+    {
+        isDirectJoining = true;
+        currentJoiningRoomId = id;
+        var res = await RoomService.DirectJoinRoomAsync(id);
+        isDirectJoining = false;
+        if (res == 1)
+        {
+            NavigationManager.NavigateTo("/room");
+        }
+        else
+        {
+            currentJoiningRoomId = Guid.Empty;
+        }
     }
 }
