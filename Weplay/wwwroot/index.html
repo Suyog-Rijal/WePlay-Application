@@ -398,6 +398,28 @@
         };
     </script>
 
+    <script>
+        window.setupResize = (container, dotNetRef) => {
+            const mouseMove = (ev) => {
+                dotNetRef.invokeMethodAsync('OnMouseMove', ev.clientX);
+            };
+            const mouseUp = () => {
+                dotNetRef.invokeMethodAsync('OnMouseUp');
+                document.removeEventListener('mousemove', mouseMove);
+                document.removeEventListener('mouseup', mouseUp);
+            };
+            document.addEventListener('mousemove', mouseMove);
+            document.addEventListener('mouseup', mouseUp);
+        };
+
+        window.getContainerWidth = (container) => {
+            return container.getBoundingClientRect().width;
+        };
+    </script>
+
+    <!--Custom video player-->
+    
+
 </body>
 
 </html>

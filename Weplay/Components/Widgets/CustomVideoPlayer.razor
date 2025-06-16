@@ -1,0 +1,46 @@
+﻿<div class="group relative aspect-video w-full max-w-5xl overflow-hidden rounded-xl bg-black shadow-xl">
+
+    <!-- Video Element Placeholder -->
+    <video id="video" class="h-full w-full rounded-xl object-cover" autoplay muted></video>
+
+    <!-- Top Gradient Overlay -->
+    <div class="bg-gradient-to-b absolute top-0 right-0 left-0 z-10 h-24 from-black/60 to-transparent"></div>
+
+    <!-- Bottom Controls -->
+    <div class="bg-gradient-to-t absolute right-0 bottom-0 left-0 z-20 flex items-center justify-between gap-4 from-black/70 to-transparent px-4 py-3 text-white opacity-0 transition-opacity group-hover:opacity-100">
+
+        <!-- Left Controls -->
+        <div class="flex items-center gap-4">
+            <button class="transition hover:scale-110">
+                <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                </svg>
+            </button>
+            <span class="text-xs text-zinc-300">00:00 / 00:00</span>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="relative h-2 flex-1 cursor-pointer overflow-hidden rounded bg-zinc-600/50">
+            <div class="absolute h-full w-[40%] bg-red-600"></div>
+        </div>
+
+        <!-- Right Controls -->
+        <div class="flex items-center gap-4">
+            <button class="transition hover:scale-110">
+                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M5 9v6h4l5 5V4l-5 5H5z" />
+                </svg>
+            </button>
+            <button class="transition hover:scale-110">
+                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 20c4.418 0 8-1.79 8-4V8c0-2.21-3.582-4-8-4S4 5.79 4 8v8c0 2.21 3.582 4 8 4z" />
+                </svg>
+            </button>
+            <button class="transition hover:scale-110">
+                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M7 4h10v2H7zm0 14h10v2H7z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>

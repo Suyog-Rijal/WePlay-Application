@@ -133,7 +133,7 @@
                     <p class="text-lg font-semibold text-zinc-200">No active sessions found</p>
                     <p class="mt-2 text-sm text-zinc-400">Be the first one to create a room!</p>
                     <button class="mt-4 flex items-center space-x-2 rounded-md bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-900 transition-all duration-200 hover:bg-zinc-200 focus:ring-2 focus:ring-zinc-600 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:outline-none"
-                            @onclick="() => { /* Add navigation or logic to create a room */ }">
+                            @onclick="() => isCreateRoomVisible = true">
                         <span>Create Room</span>
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -162,27 +162,27 @@
                         <div class="group relative flex h-96 flex-col overflow-hidden rounded-xl border border-zinc-800/50 bg-zinc-900 transition-all duration-300 hover:border-zinc-700/50 hover:shadow-xl hover:shadow-zinc-900/20">
                             <div class="relative h-48 flex-shrink-0 overflow-hidden">
                                 <div class="aspect-[16/9] h-full w-full">
-                                    <img loading="lazy" src="@(room.content?.image_url ?? "/placeholder.svg?height=192&width=341")"
+                                    <img loading="lazy" src="@(room.content?.image_url ?? "/images/waiting.jpg?height=192&width=341")"
                                          alt="@(room.content?.title ?? "No Title")"
                                          class="h-full w-full object-cover transition-all duration-500 group-hover:scale-105" />
                                 </div>
                                 <div class="bg-gradient-to-t absolute inset-0 from-zinc-900/95 via-zinc-900/40 to-zinc-900/30" />
                                 <div class="absolute bottom-0 left-0 w-[80%] p-4">
-                                    <h3 class="line-clamp-1 text-lg leading-tight font-bold text-zinc-200 drop-shadow-md">
-                                        @(room.content?.title ?? "Untitled")
+                                    <h3 class='line-clamp-1 text-lg leading-tight font-bold drop-shadow-md @(room.content?.title != null ? "text-zinc-200" : "text-zinc-500")'>
+                                        @(room.content?.title ?? "")
                                     </h3>
                                 </div>
                                 <div class="absolute top-3 right-3">
                                     @if (room.is_full)
                                     {
-                                        <div class="inline-flex items-center gap-1.5 rounded-full bg-red-500/90 px-3 py-1 text-xs font-medium text-white shadow-md backdrop-blur-sm">
+                                        <div class="inline-flex items-center gap-1.5 rounded-full bg-zinc-500/90 px-3 py-1 text-xs font-medium text-white shadow-md backdrop-blur-sm">
                                             <div class="h-1.5 w-1.5 rounded-full bg-white"></div>
                                             Full
                                         </div>
                                     }
                                     else
                                     {
-                                        <div class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/90 px-3 py-1 text-xs font-medium text-white shadow-md backdrop-blur-sm">
+                                        <div class="inline-flex items-center gap-1.5 rounded-full bg-red-500/90 px-3 py-1 text-xs font-medium text-white shadow-md backdrop-blur-sm">
                                             <div class="h-1.5 w-1.5 animate-pulse rounded-full bg-white"></div>
                                             Live
                                         </div>
@@ -206,7 +206,7 @@
                             </div>
                             <div class="flex min-h-0 flex-1 flex-col space-y-3 p-4">
                                 <h4 class="line-clamp-1 text-base font-semibold text-zinc-100">@(room.name ?? "Unnamed Room")</h4>
-                                <p class="line-clamp-2 flex-shrink text-sm leading-relaxed text-zinc-400">@(room.description ?? "No description available")</p>
+                                <p class="line-clamp-1 flex-shrink text-sm leading-relaxed text-zinc-400">@(room.description ?? "No description available")</p>
                                 <div class="flex items-center justify-between pt-1 text-xs">
                                     <div class="flex items-center gap-1.5 text-zinc-400">
                                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -218,7 +218,7 @@
                                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
-                                        <span>@room.total_participants/8</span>
+                                        <span>@room.total_participants/@room.max_participants</span>
                                     </div>
                                 </div>
                             </div>
@@ -274,7 +274,6 @@
     protected override async Task OnInitializedAsync()
     {
         isLoading = true;
-        await Task.Delay(3000);
         rooms = await RoomService.GetRoomsAsync();
 		isLoading = false;
     }

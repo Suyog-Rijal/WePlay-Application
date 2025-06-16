@@ -18,9 +18,11 @@ namespace Weplay
                 });
 
             builder.Services.AddMauiBlazorWebView();
+            //builder.Services.AddSignalR();
             builder.Services.AddAuthorizationCore();
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<RoomService> ();
+            builder.Services.AddScoped<YoutubeService> ();
             builder.Services.AddSingleton<AuthProvider>();
             builder.Services.AddSingleton<AuthenticationStateProvider>(sp => sp.GetRequiredService<AuthProvider>());
 

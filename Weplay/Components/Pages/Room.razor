@@ -1,0 +1,205 @@
+﻿@page "/room"
+@inject IJSRuntime JS
+@implements IDisposable
+@using Weplay.Components.Widgets
+
+
+<div @ref="containerRef" class="flex h-screen w-screen overflow-hidden text-zinc-100">
+
+    <!-- Left container -->
+    <div id="left-container" class="p-2" style="width:@LeftWidth%">
+        <div class="flex h-full w-full flex-col items-center justify-center rounded-lg">
+
+            @if (!Config.ISVIDEOSELECTED)
+            {
+
+                @if (Config.ISHOST)
+                {
+                    @* Host view *@
+                    <div class="max-w-md p-6 text-center">
+                        <div class="mb-4 flex justify-center">
+                            <div class="relative h-16 w-16">
+                                <div class="absolute inset-0 animate-ping rounded-full bg-zinc-600 opacity-20"></div>
+                                <div class="absolute inset-1 flex items-center justify-center rounded-full bg-zinc-700">
+                                    <svg class="h-6 w-6 text-zinc-300" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M18 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2zM7 6h2v2H7V6zm0 4h2v2H7v-2zm0 4h2v2H7v-2zm8-8h2v2h-2V6zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <h3 class="mb-2 text-xl font-semibold">Host Controls</h3>
+                        <p class="mb-4 text-zinc-400">Choose a platform to start streaming:</p>
+                        <a href="/youtube" class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-red-700">
+                            <svg class="h-5 w-5 fill-current text-white" viewBox="0 0 24 24">
+                                <path d="M19.615 3.184C21.348 3.73 22 5.056 22 8v8c0 2.944-.652 4.27-2.385 4.816C17.35 21.5 12 21.5 12 21.5s-5.35 0-7.615-.684C2.652 20.27 2 18.944 2 16V8c0-2.944.652-4.27 2.385-4.816C6.65 2.5 12 2.5 12 2.5s5.35 0 7.615.684zM10 9.5v5l4.5-2.5L10 9.5z" />
+                            </svg>
+                            Start with YouTube
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    @* Participant view *@
+                    <div class="max-w-md p-6 text-center">
+                        <div class="mb-4 flex justify-center">
+                            <div class="relative h-16 w-16">
+                                <div class="absolute inset-0 animate-ping rounded-full bg-zinc-600 opacity-20"></div>
+                                <div class="absolute inset-1 flex items-center justify-center rounded-full bg-zinc-700">
+                                    <svg class="h-6 w-6 text-zinc-300" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M18 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2zM7 6h2v2H7V6zm0 4h2v2H7v-2zm0 4h2v2H7v-2zm8-8h2v2h-2V6zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <h3 class="mb-2 text-xl font-semibold">Waiting for host</h3>
+                        <p class="text-zinc-400">The host will start the stream soon</p>
+                    </div>
+                }
+
+            }
+            else
+            {
+                <CustomVideoPlayer/>
+            }
+
+        </div>
+    </div>
+
+    <!-- Resizer -->
+    <div tabindex="0"
+         role="separator"
+         class="cursor-col-resize border border-zinc-800 hover:border-2 hover:border-zinc-700"
+         @onmousedown="StartResize"
+         @onkeydown="HandleKeyDown"
+         style="width: 0.1%"
+         aria-valuenow="@LeftWidth"
+         aria-valuemin="60"
+         aria-valuemax="75"
+         aria-orientation="vertical"
+         aria-label="Resize panels">
+    </div>
+
+    <!-- Right container -->
+    <div id="right-container" style="width:@(100 - LeftWidth - 0.1)%">
+        <div class="flex h-full w-full flex-col gap-2 p-2">
+            <div class="chat-glass flex items-center justify-between rounded-t-lg p-3">
+                <h3 class="flex items-center gap-2 text-lg font-semibold">
+                    <svg class="h-5 w-5 text-zinc-100" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M21 6h-2v9H6v2a2 2 0 002 2h11l4 4V6a2 2 0 00-2-2zm-6 7H3a2 2 0 01-2-2V4a2 2 0 012-2h12a2 2 0 012 2v7a2 2 0 01-2 2z" />
+                    </svg>
+                    Chat <span class="live-dot"></span>
+                    ļoti
+                </h3>
+                <button class="flex items-center gap-1 rounded-full bg-zinc-700 px-3 py-1 text-xs hover:bg-zinc-600">
+                    <svg class="h-4 w-4 text-zinc-100" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                    </svg>
+                    Copy Link
+                </button>
+            </div>
+
+            <div class="chat-glass flex-1 space-y-3 overflow-y-auto rounded-lg p-3">
+                <div class="flex gap-2">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-700 text-xs">
+                        <svg class="h-4 w-4 text-zinc-100" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2a2 2 0 00-2 2v2H6a3 3 0 00-3 3v8a3 3 0 003 3h12a3 3 0 003-3V9a3 3 0 00-3-3h-4V4a2 2 0 00-2-2zm-2 9h4v4h-4v-4zm-2 2a1 1 0 01-1-1h2a1 1 0 01-1 1zm8 0a1 1 0 01-1-1h2a1 1 0 01-1 1z" />
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <div class="text-sm font-semibold">System <span class="text-xs text-zinc-500">2:30 PM</span></div>
+                        <div class="text-sm">Welcome to the watch party!</div>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-700 text-xs">JD</div>
+                    <div class="flex-1">
+                        <div class="text-sm font-semibold">John <span class="text-xs text-zinc-500">2:32 PM</span></div>
+                        <div class="text-sm">Hey everyone!</div>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-700 text-xs">MS</div>
+                    <div class="flex-1">
+                        <div class="text-sm font-semibold">MovieFan <span class="text-xs text-zinc-500">2:33 PM</span></div>
+                        <div class="text-sm">Ready to watch!</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-glass rounded-b-lg p-2">
+                <div class="flex gap-2">
+                    <input type="text" placeholder="Type a message..." class="flex-1 rounded-lg bg-zinc-700/70 px-3 py-2 text-sm focus:outline-none">
+                    <button class="rounded-lg bg-zinc-700 px-4 py-2 text-sm hover:bg-zinc-600">
+                        <svg class="h-4 w-4 text-zinc-100" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private ElementReference containerRef;
+    private double LeftWidth = 70;
+    private double MinLeft = 60;
+    private double MaxLeft = 75;
+    private bool isDragging = false;
+    private double startX;
+    private double startLeftWidth;
+    private DotNetObjectReference<Room>? dotNetRef;
+
+    protected override void OnInitialized()
+    {
+        dotNetRef = DotNetObjectReference.Create(this);
+    }
+
+    private async Task StartResize(MouseEventArgs e)
+    {
+        isDragging = true;
+        startX = e.ClientX;
+        startLeftWidth = LeftWidth;
+
+        await JS.InvokeVoidAsync("setupResize", containerRef, dotNetRef);
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "ArrowLeft")
+        {
+            LeftWidth = Math.Max(MinLeft, LeftWidth - 1);
+        }
+        else if (e.Key == "ArrowRight")
+        {
+            LeftWidth = Math.Min(MaxLeft, LeftWidth + 1);
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public async Task OnMouseMove(double clientX)
+    {
+        if (!isDragging) return;
+
+        var deltaX = clientX - startX;
+        var containerWidth = await JS.InvokeAsync<double>("getContainerWidth", containerRef);
+        var deltaWidth = (deltaX / containerWidth) * 100;
+        var newLeftWidth = startLeftWidth + deltaWidth;
+
+        LeftWidth = Math.Clamp(newLeftWidth, MinLeft, MaxLeft);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public async Task OnMouseUp()
+    {
+        isDragging = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        dotNetRef?.Dispose();
+    }
+}

@@ -1,0 +1,124 @@
+﻿@page "/youtube"
+@using Weplay.Dtos.Youtube
+@using Weplay.Services
+@inject YoutubeService YoutubeService
+
+<div class="flex h-screen w-full flex-col overflow-hidden text-zinc-100">
+    <!-- Header -->
+    <div class="sticky top-0 z-50 w-full border-b border-zinc-800 bg-zinc-900">
+        <div class="flex items-center justify-between px-4 py-3">
+            <!-- Left: Logo -->
+            <div class="flex min-w-0 flex-shrink-0 items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="flex h-8 w-8 items-center justify-center rounded">
+                        <img src="/images/logo.png" class="h-full w-full object-cover object-center" />
+                    </div>
+                    <span class="hidden text-xl font-medium sm:block">Play</span>
+                </div>
+            </div>
+
+            <!-- Center: Search Bar -->
+            <div class="relative mx-4 max-w-2xl flex-1">
+                <div class="flex items-center">
+                    <div class="relative flex-1">
+                        <div class="flex rounded-l-full border border-zinc-700 bg-zinc-800 transition-colors focus-within:border-blue-500">
+                            <input id="searchInput"
+                                   class="placeholder-zinc-400 w-full rounded-l-full bg-transparent px-4 py-2 text-zinc-100 outline-none"
+                                   type="search"
+                                   value="@searchQuery"
+                                   @oninput="OnInputChanged"
+                                   placeholder="Search"
+                                   autocomplete="off" />
+                        </div>
+                    </div>
+
+                    <button class="rounded-r-full border border-l-0 border-zinc-700 bg-zinc-700 px-6 py-2 transition-colors hover:bg-zinc-600">
+                        <svg class="h-5 w-5 text-zinc-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right: User Actions -->
+            <div class="flex flex-shrink-0 items-center gap-2">
+                <div class="bg-gradient-to-r flex h-8 w-8 cursor-pointer items-center justify-center rounded-full from-purple-500 to-blue-500 text-sm font-medium transition-shadow hover:shadow-lg">
+                    WP
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scrollable Main Content -->
+    <div class="scrollbar flex-1 overflow-y-auto p-4">
+        @if (searchResults.Any())
+        {
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                @foreach (var each in searchResults)
+                {
+                    <div class="group w-full">
+                        <div class="relative mb-3 cursor-pointer overflow-hidden rounded-xl">
+                            <img src=@each.thumbnail
+                                 alt="Video Thumbnail"
+                                 class="aspect-video w-full object-cover transition-transform duration-200" />
+                            <div class="bg-opacity-80 absolute right-2 bottom-2 rounded bg-black px-2 py-1 text-xs font-medium text-white">
+                                @each.duration
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="flex-shrink-0">
+                                <img src="@each.channel_avatar"
+                                     alt=""
+                                     class="h-9 w-9 cursor-pointer rounded-full transition-shadow hover:shadow-lg" />
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h3 class="mb-1 line-clamp-2 cursor-pointer text-sm font-medium transition-colors hover:text-zinc-300">
+                                    @each.title
+                                </h3>
+                                <p class="mb-1 cursor-pointer text-xs text-zinc-400 transition-colors hover:text-zinc-200">@each.channel</p>
+                                <p class="text-xs text-zinc-500">@each.views views • @each.published_time</p>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="animate-fade-in flex h-full flex-col items-center justify-center text-zinc-400">
+                <svg class="mb-4 h-24 w-24 animate-pulse text-zinc-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m1.59-5.4a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <p class="text-lg font-medium">No results found</p>
+                <p class="text-sm text-zinc-500">Try searching for something else.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private string searchQuery = string.Empty;
+    private CancellationTokenSource debounceCts;
+    private List<SearchDto> searchResults = new List<SearchDto>();
+
+    private async Task OnInputChanged(ChangeEventArgs e)
+    {
+        searchQuery = e.Value?.ToString() ?? string.Empty;
+        debounceCts?.Cancel();
+        debounceCts = new CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(500, debounceCts.Token);
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                searchResults = await YoutubeService.YoutubeSearch(searchQuery);
+            }
+            else
+            {
+                searchResults.Clear();
+            }
+        }
+        catch (TaskCanceledException) { }
+    }
+}
