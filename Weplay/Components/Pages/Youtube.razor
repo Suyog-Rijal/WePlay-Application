@@ -58,7 +58,7 @@
                 @foreach (var each in searchResults)
                 {
                     <div class="group w-full">
-                        <div class="relative mb-3 cursor-pointer overflow-hidden rounded-xl">
+                        <div class="relative mb-3 cursor-pointer overflow-hidden rounded-xl" @onclick="() => UpdateContent(each.id)">
                             <img src=@each.thumbnail
                             alt="Video Thumbnail"
                             class="aspect-video w-full object-cover transition-transform duration-200" />

@@ -26,7 +26,7 @@ namespace Weplay
         public static readonly string REDIRECTURL = "http://localhost:12345/";
 
         public static bool ISHOST = false;
-        public static bool ISVIDEOSELECTED = false;
+        public static bool ISVIDEOSELECTED = true;
         public static Guid ROOMID = Guid.Empty;
 
 
