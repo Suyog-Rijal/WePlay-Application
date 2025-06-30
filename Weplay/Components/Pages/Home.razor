@@ -1,9 +1,13 @@
 ﻿@page "/"
+@using System.Diagnostics
 @using Weplay.Dtos.Room
 @using Weplay.Services
 @inject AuthService AuthService
 @inject RoomService RoomService
 @using Weplay.Components.Widgets
+@inject HomeClientService HomeClientService
+@implements IDisposable
+
 
 <AuthorizeView>
     <Authorized>
@@ -28,7 +32,7 @@
 
                         <div class="hidden items-center space-x-4 md:flex">
                             <button @onclick="() => isCreateRoomVisible = !isCreateRoomVisible"
-                                    class="group flex items-center space-x-2 rounded-md bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-900 transition-all duration-200 hover:bg-zinc-200 focus:ring-2 focus:ring-zinc-600 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:outline-none">
+                            class="group flex items-center space-x-2 rounded-md bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-900 transition-all duration-200 hover:bg-zinc-200 focus:ring-2 focus:ring-zinc-600 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:outline-none">
                                 <span>Create Room</span>
                                 <svg class="h-4 w-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -47,9 +51,9 @@
                                     @if (!string.IsNullOrEmpty(context.User.FindFirst("profile_picture")?.Value))
                                     {
                                         <img loading="lazy"
-                                             src="@context.User.FindFirst("profile_picture")?.Value"
-                                             alt="User Avatar"
-                                             class="h-8 w-8 rounded-full border border-zinc-600 object-cover object-center" />
+                                        src="@context.User.FindFirst("profile_picture")?.Value"
+                                        alt="User Avatar"
+                                        class="h-8 w-8 rounded-full border border-zinc-600 object-cover object-center" />
                                     }
                                     else
                                     {
@@ -72,9 +76,9 @@
                                 @if (!string.IsNullOrEmpty(context.User.FindFirst("profile_picture")?.Value))
                                 {
                                     <img loading="lazy"
-                                         src="@context.User.FindFirst("profile_picture")?.Value"
-                                         alt="User Avatar"
-                                         class="h-8 w-8 rounded-full border border-zinc-600 object-cover object-center" />
+                                    src="@context.User.FindFirst("profile_picture")?.Value"
+                                    alt="User Avatar"
+                                    class="h-8 w-8 rounded-full border border-zinc-600 object-cover object-center" />
                                 }
                                 else
                                 {
@@ -159,7 +163,7 @@
                             <p class="text-lg font-semibold text-zinc-200">No active sessions found</p>
                             <p class="mt-2 text-sm text-zinc-400">Be the first one to create a room!</p>
                             <button class="mt-4 flex items-center space-x-2 rounded-md bg-zinc-50 px-4 py-2.5 text-sm font-medium text-zinc-900 transition-all duration-200 hover:bg-zinc-200 focus:ring-2 focus:ring-zinc-600 focus:ring-offset-2 focus:ring-offset-zinc-900 focus:outline-none"
-                                    @onclick="() => isCreateRoomVisible = true">
+                            @onclick="() => isCreateRoomVisible = true">
                                 <span>Create Room</span>
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -189,8 +193,8 @@
                                     <div class="relative h-48 flex-shrink-0 overflow-hidden">
                                         <div class="aspect-[16/9] h-full w-full">
                                             <img loading="lazy" src="@(room.content?.thumbnail ?? "/images/waiting.jpg?height=192&width=341")"
-                                                 alt="@(room.content?.title ?? "No Title")"
-                                                 class="h-full w-full object-cover transition-all duration-500 group-hover:scale-105" />
+                                            alt="@(room.content?.title ?? "No Title")"
+                                            class="h-full w-full object-cover transition-all duration-500 group-hover:scale-105" />
                                         </div>
                                         <div class="bg-gradient-to-t absolute inset-0 from-zinc-900/95 via-zinc-900/40 to-zinc-900/30" />
                                         <div class="absolute bottom-0 left-0 w-[80%] p-4">
@@ -250,7 +254,7 @@
                                     </div>
                                     <div class="mt-auto px-4 pb-4">
                                         <button disabled="@room.is_full" @onclick="@(() => HandelDirectJoin(room.id))"
-                                                class="w-full rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-300 flex justify-center items-center @(room.is_full ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" : "bg-zinc-800 text-zinc-100 hover:text-zinc-900 hover:bg-zinc-100 hover:shadow-lg active:scale-[0.98]")">
+                                        class="w-full rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-300 flex justify-center items-center @(room.is_full ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" : "bg-zinc-800 text-zinc-100 hover:text-zinc-900 hover:bg-zinc-100 hover:shadow-lg active:scale-[0.98]")">
                                             @if (isDirectJoining && currentJoiningRoomId == room.id)
                                             {
                                                 <div id="emailLoadingContent" class="flex items-center space-x-2">
@@ -295,6 +299,14 @@
                         </svg>
                         <span class="text-xs font-medium">Ultra-Low Latency</span>
                     </div>
+                    <div class="flex items-center space-x-1.5">
+                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <button @onclick="handleLogout">
+                            Logout
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -312,8 +324,45 @@
     {
         isLoading = true;
         rooms = await RoomService.GetRoomsAsync();
-        isLoading = false;
+        HomeClientService.OnHomeEventReceived += HandleRoomEvent;
+        await HomeClientService.ConnectAsync(); isLoading = false;
     }
+
+    private void handleLogout()
+    {
+        AuthService.Logout();
+        NavigationManager.NavigateTo("/login", replace: true);
+    }
+
+
+    private void HandleRoomEvent(string eventType, RoomGetDto room)
+    {
+        InvokeAsync(() =>
+        {
+            var existingRoomIndex = rooms.FindIndex(r => r.id == room.id);
+
+            switch (eventType)
+            {
+                case "room_created":
+                    if (existingRoomIndex == -1)
+                        rooms.Add(room);
+                    break;
+
+                case "room_updated":
+                    if (existingRoomIndex != -1)
+                        rooms[existingRoomIndex] = room;
+                    break;
+
+                case "room_deleted":
+                    if (existingRoomIndex != -1)
+                        rooms.RemoveAt(existingRoomIndex);
+                    break;
+            }
+
+            StateHasChanged();
+        });
+    }
+
 
     private string FormatDuration(int durationInSeconds)
     {
@@ -342,11 +391,17 @@
         isDirectJoining = false;
         if (res == 1)
         {
-            NavigationManager.NavigateTo("/room");
+            NavigationManager.NavigateTo($"/room/{id}");
         }
         else
         {
             currentJoiningRoomId = Guid.Empty;
         }
+    }
+
+    public void Dispose()
+    {
+        HomeClientService.OnHomeEventReceived -= HandleRoomEvent;
+        _ = HomeClientService.DisconnectAsync();
     }
 }

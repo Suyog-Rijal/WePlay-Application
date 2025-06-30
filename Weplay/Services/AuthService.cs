@@ -86,6 +86,8 @@ namespace Weplay.Services
                 var response = await Config.client.PostAsync(Config.VERIFYURL, payload);
                 if (response.IsSuccessStatusCode)
                 {
+                    var resData = await response.Content.ReadFromJsonAsync<LoginResponseDto>();
+                    await _authProvider.LoginAsync(resData);
                     return 1;
                 }
                 return 0;

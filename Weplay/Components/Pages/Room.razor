@@ -1,7 +1,10 @@
-﻿@page "/room"
+﻿@page "/room/{RoomId}"
 @inject IJSRuntime JS
 @implements IDisposable
+@using System.Diagnostics
 @using Weplay.Components.Widgets
+@using Services
+@inject RoomService RoomService
 
 <div @ref="containerRef" class="flex h-screen w-screen overflow-hidden text-zinc-100">
 
@@ -161,11 +164,22 @@
     private double startX;
     private double startLeftWidth;
     private DotNetObjectReference<Room>? dotNetRef;
+    [Parameter]
+    public string RoomId { get; set; }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         dotNetRef = DotNetObjectReference.Create(this);
+        var res = await RoomService.GetRoomState(RoomId);
+        if (res != 1)
+        {
+            Debug.WriteLine($"Error fetching room state: {res}");
+            Debug.WriteLine("This is a gracefull sutdown to prevent further damage.");
+            System.Diagnostics.Process.GetCurrentProcess().Kill();
+            return;
+        }
     }
+
 
     private async Task StartResize(MouseEventArgs e)
     {

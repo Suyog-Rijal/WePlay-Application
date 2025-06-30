@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR.Client;
+using Weplay.Dtos.Room;
 
 namespace Weplay
 {
@@ -20,14 +20,18 @@ namespace Weplay
         public static readonly string GOOGLELOGINVERIFY = BASEURL + "/auth/google-auth/";
         public static readonly string FORGOTPASSWORDURL = BASEURL + "/auth/forgot-password/";
         public static readonly string ROOMSURL = BASEURL + "/room/";
+        public static readonly string ROOMSTATEURL = BASEURL + "/room/state/";
         public static readonly string YOUTUBESEARCH = BASEURL + "/youtube/search";
 
         public static readonly string CLIENTID = "947660927100-jagt53gulv7kpqe1eqbdqhr8tik274mi.apps.googleusercontent.com";
         public static readonly string REDIRECTURL = "http://localhost:12345/";
 
+        public static readonly string SOCKEYBASEURL = "ws://127.0.0.1:8000/ws";
+
         public static bool ISHOST = false;
-        public static bool ISVIDEOSELECTED = true;
+        public static bool ISVIDEOSELECTED = false;
         public static Guid ROOMID = Guid.Empty;
+        public static RoomStateDto? ROOMSTATE = null;
 
 
         public static readonly HttpClient client = new HttpClient
@@ -35,17 +39,6 @@ namespace Weplay
             BaseAddress = new Uri(BASEURL)
         };
 
-        public static HubConnection BuildDynamicHubConnection(string  hubName)
-        {
-            var url = new Uri(new(BASESOCKETURL), hubName).ToString();
-            return new HubConnectionBuilder().WithUrl(url, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => new HttpClientHandler
-                {
-                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-                };
-            }).WithAutomaticReconnect().Build();
-
-        }
+       
     }
 }

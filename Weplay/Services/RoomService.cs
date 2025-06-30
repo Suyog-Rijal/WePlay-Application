@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Weplay.Dtos.Auth;
 using Weplay.Dtos.Room;
@@ -52,8 +53,6 @@ namespace Weplay.Services
                 {
                     var content = await response.Content.ReadFromJsonAsync<RoomCreateDto>();
                     Config.ROOMID = content.id;
-                    Debug.WriteLine($"Room created with ID: {content.id}");
-                    Console.WriteLine($"Room created with ID: {content.id}");
                     Config.ISHOST = true;
                     return 1;
                 }
@@ -153,5 +152,27 @@ namespace Weplay.Services
                 return 0;
             }
         }
+
+        public async Task<int> GetRoomState(string id)
+        {
+            try
+            {
+                var response = await Config.client.GetAsync(Config.ROOMSTATEURL + id + "/");
+                if (response.IsSuccessStatusCode)
+                {
+                    var room = await response.Content.ReadFromJsonAsync<RoomStateDto>();
+                    Config.ROOMSTATE = room;
+                    Config.ISVIDEOSELECTED = room?.content != null && room.content.id != Guid.Empty;
+                    return 1;
+                }
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error fetching rooms: {ex.Message}");
+                return 0;
+            }
+        }
+
     }
 }

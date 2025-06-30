@@ -18,7 +18,7 @@ namespace Weplay
                 });
 
             builder.Services.AddMauiBlazorWebView();
-            //builder.Services.AddSignalR();
+            builder.Services.AddSingleton<HomeClientService>();
             builder.Services.AddAuthorizationCore();
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<RoomService> ();

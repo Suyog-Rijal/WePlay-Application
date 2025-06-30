@@ -3,6 +3,8 @@
 @using Weplay.Services
 @inject YoutubeService YoutubeService
 @inject RoomService RoomService
+@inject IJSRuntime JS
+
 
 <div class="flex h-screen w-full flex-col overflow-hidden text-zinc-100">
     <!-- Header -->
@@ -137,7 +139,7 @@
 
         if (res == 1)
         {
-            NavigationManager.NavigateTo("/room");
+            await JS.InvokeVoidAsync("history.back");
             return;
         }
 

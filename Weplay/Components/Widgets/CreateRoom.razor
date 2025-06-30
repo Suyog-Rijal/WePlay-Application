@@ -175,7 +175,7 @@
         var res = await RoomService.CreateRoomAsync(roomName, roomDescription, maxParticipants, selectedCategory ?? "mo", isPublic);
         if (res == 1)
         {
-            NavigationManager.NavigateTo("/room");
+            NavigationManager.NavigateTo($"/room/{Config.ROOMID}");
         }
         isSubmitting = false;
     }

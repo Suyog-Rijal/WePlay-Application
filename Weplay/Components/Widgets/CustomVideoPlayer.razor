@@ -95,10 +95,10 @@
 
 @code {
     private bool isPlayerInitialized = false;
-    private bool isPlaying = false;
+    private bool isPlaying = Config.ROOMSTATE.state.is_playing;
     private double progressPercentage = 0;
     private string currentTimeString = "0:00";
-    private const double TotalDuration = 188.4;
+    private double TotalDuration = Config.ROOMSTATE.content.duration;
     private string totalTimeString = "";
     private CancellationTokenSource? cts;
     private bool isDragging = false;
