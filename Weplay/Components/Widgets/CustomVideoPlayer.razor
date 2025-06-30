@@ -1,4 +1,6 @@
 ﻿@implements IDisposable
+@inject IJSRuntime JS
+
 <div class="relative flex h-full w-full items-center justify-center">
     <div class="group relative aspect-video w-full max-w-6xl overflow-hidden rounded-lg bg-black shadow-md">
         <div class="relative flex h-full w-full items-center justify-center">
@@ -16,11 +18,22 @@
                             <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
                         </svg>
                     </button>
-                    <button class="rounded-full border border-blue-400/50 bg-blue-600 p-5 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-blue-500" @onclick="PlayVideo">
-                        <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z" />
-                        </svg>
-                    </button>
+                    @if (!isPlaying)
+                    {
+                        <button class="rounded-full border border-blue-400/50 bg-blue-600 p-5 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-blue-500" @onclick="PlayVideo">
+                            <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                            </svg>
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="rounded-full border border-white/20 bg-white/10 p-5 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-white/20" @onclick="PauseVideo">
+                            <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                            </svg>
+                        </button>
+                    }
                     <button class="rounded-full border border-white/20 bg-white/10 p-3 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-white/20" @onclick="PauseVideo">
                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
@@ -34,15 +47,15 @@
                     </div>
                 </div>
             </div>
-            <ល  <div class="bg-gradient-to-t from-black/80 to-transparent p-4">
+            <div class="bg-gradient-to-t from-black/80 to-transparent p-4">
                 <div class="mb-3">
                     <div class="group/progress relative flex-1">
                         <div class="h-1 overflow-hidden rounded-full bg-white/20 will-change-transform">
-                            <div class="h-full rounded-full bg-blue-500 transition-all duration-150 group-hover/progress:shadow-md" style="width: 35%"></div>
+                            <div class="h-full rounded-full bg-blue-500 transition-all duration-150 group-hover/progress:shadow-md" style="width: @(progressPercentage.ToString("F2"))%"></div>
                         </div>
-                        <div class="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white opacity-0 transition-opacity duration-200 group-hover/progress:opacity-100" style="left: 35%; margin-left: -6px;"></div>
+                        <div class="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white opacity-0 transition-opacity duration-200 group-hover/progress:opacity-100" style="left: @(progressPercentage.ToString("F2"))%; margin-left: -6px;"></div>
                     </div>
-                    <span class="min-w-10">3:45</span>
+                    <span class="min-w-10">@currentTimeString / @totalTimeString</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -82,17 +95,57 @@
 </div>
 
 @code {
-    [Inject] IJSRuntime JS { get; set; }
     private bool isPlayerInitialized = false;
+    private bool isPlaying = false;
+    private double progressPercentage = 0;
+    private string currentTimeString = "0:00";
+    private const double TotalDuration = 188.4; // 3.14 minutes in seconds
+    private string totalTimeString;
+    private CancellationTokenSource cts;
+
+    protected override void OnInitialized()
+    {
+        var totalMinutes = (int)(TotalDuration / 60);
+        var totalSeconds = (int)Math.Round(TotalDuration % 60);
+        totalTimeString = $"{totalMinutes}:{totalSeconds:D2}";
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            cts = new CancellationTokenSource();
+            _ = UpdateProgressLoop(cts.Token);
+        }
+    }
+
+    private async Task UpdateProgressLoop(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            if (isPlayerInitialized)
+            {
+                var currentTime = await JS.InvokeAsync<double>("youtubePlayerInterop.getCurrentTime");
+                progressPercentage = Math.Max(0, Math.Min(100, (currentTime / TotalDuration) * 100));
+                var minutes = (int)(currentTime / 60);
+                var seconds = (int)(currentTime % 60);
+                currentTimeString = $"{minutes}:{seconds:D2}";
+                StateHasChanged();
+            }
+            await Task.Delay(100, token);
+        }
+    }
 
     private async Task PlayVideo()
     {
         if (!isPlayerInitialized)
         {
-            await JS.InvokeVoidAsync("youtubePlayerInterop.initialize", "KzclmnHJcvs");
+            await JS.InvokeVoidAsync("youtubePlayerInterop.initialize", "44OfYLY9usg");
             isPlayerInitialized = true;
         }
         await JS.InvokeVoidAsync("youtubePlayerInterop.play");
+        isPlaying = true;
+        StateHasChanged();
     }
 
     private async Task PauseVideo()
@@ -100,11 +153,14 @@
         if (isPlayerInitialized)
         {
             await JS.InvokeVoidAsync("youtubePlayerInterop.pause");
+            isPlaying = false;
+            StateHasChanged();
         }
     }
 
     public void Dispose()
     {
+        cts?.Cancel();
         if (isPlayerInitialized)
         {
             JS.InvokeVoidAsync("youtubePlayerInterop.destroy");
