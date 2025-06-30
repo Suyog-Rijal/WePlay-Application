@@ -1,26 +1,27 @@
-﻿<div class="relative flex h-full w-full items-center justify-center">
-    <div class="group relative aspect-video w-full max-w-6xl overflow-hidden rounded-lg bg-black shadow-2xl shadow-blue-500/20">
-        <div class="bg-gradient-to-br relative flex h-full w-full items-center justify-center from-zinc-800 to-zinc-900">
-            <div class="text-6xl font-light text-white/40 opacity-100 transition-opacity duration-300 select-none group-hover:opacity-0">▶</div>
+﻿@implements IDisposable
+<div class="relative flex h-full w-full items-center justify-center">
+    <div class="group relative aspect-video w-full max-w-6xl overflow-hidden rounded-lg bg-black shadow-md">
+        <div class="relative flex h-full w-full items-center justify-center">
+            <div id="youtube-player" class="h-full w-full"></div>
         </div>
-        <div class="bg-gradient-to-t absolute inset-0 flex flex-col from-black/80 via-transparent to-black/40 opacity-0 transition-all duration-300 group-hover:opacity-100">
+        <div class="bg-gradient-to-t absolute inset-0 flex flex-col from-black/80 via-transparent to-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
             <div class="bg-gradient-to-b from-black/60 to-transparent p-4">
                 <h1 class="mb-1 text-lg font-bold">Sample Video Title</h1>
                 <p class="text-xs text-zinc-300 opacity-90">High quality content • 1080p • 5.2M views</p>
             </div>
             <div class="flex flex-1 items-center justify-center">
                 <div class="flex items-center gap-6">
-                    <button class="rounded-full border border-white/20 bg-white/10 p-3 backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-white/20 hover:shadow-[0_0_10px_2px_rgba(59,130,246,0.3)]">
+                    <button class="rounded-full border border-white/20 bg-white/10 p-3 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-white/20">
                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
                         </svg>
                     </button>
-                    <button class="rounded-full border border-blue-400/50 bg-blue-600 p-5 shadow-lg shadow-blue-500/40 backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-blue-500 hover:shadow-[0_0_12px_3px_rgba(59,130,246,0.4)]">
+                    <button class="rounded-full border border-blue-400/50 bg-blue-600 p-5 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-blue-500" @onclick="PlayVideo">
                         <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M8 5v14l11-7z" />
                         </svg>
                     </button>
-                    <button class="rounded-full border border-white/20 bg-white/10 p-3 backdrop-blur-md transition-all duration-200 hover:scale-105 hover:bg-white/20 hover:shadow-[0_0_10px_2px_rgba(59,130,246,0.3)]">
+                    <button class="rounded-full border border-white/20 bg-white/10 p-3 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-white/20" @onclick="PauseVideo">
                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
                         </svg>
@@ -33,45 +34,42 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-gradient-to-t from-black/80 to-transparent p-4">
+            <ល  <div class="bg-gradient-to-t from-black/80 to-transparent p-4">
                 <div class="mb-3">
-                    <div class="mb-2 flex items-center gap-2 text-xs text-zinc-300">
-                        <span class="min-w-10">0:00</span>
-                        <div class="group/progress relative flex-1">
-                            <div class="h-1 overflow-hidden rounded-full bg-white/20">
-                                <div class="h-full rounded-full bg-blue-500 transition-all duration-150 group-hover/progress:shadow-[0_0_8px_1px_rgba(59,130,246,0.3)]" style="width: 35%"></div>
-                            </div>
-                            <div class="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white opacity-0 transition-opacity duration-200 group-hover/progress:opacity-100 group-hover/progress:shadow-[0_0_8px_2px_rgba(59,130,246,0.4)]" style="left: 35%; margin-left: -6px;"></div>
+                    <div class="group/progress relative flex-1">
+                        <div class="h-1 overflow-hidden rounded-full bg-white/20 will-change-transform">
+                            <div class="h-full rounded-full bg-blue-500 transition-all duration-150 group-hover/progress:shadow-md" style="width: 35%"></div>
                         </div>
-                        <span class="min-w-10">3:45</span>
+                        <div class="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white opacity-0 transition-opacity duration-200 group-hover/progress:opacity-100" style="left: 35%; margin-left: -6px;"></div>
                     </div>
+                    <span class="min-w-10">3:45</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div class="group/volume flex items-center transition-all duration-300">
-                            <button class="rounded-lg p-1.5 transition-all duration-200 hover:bg-white/10 hover:shadow-[0_0_8px_1px_rgba(59,130,246,0.2)]">
+                            <button class="rounded-lg p-1.5 transition-all duration-200 hover:bg-white/10">
                                 <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
                                 </svg>
                             </button>
                             <div class="ml-2 h-1 w-0 rounded-full bg-white/20 opacity-0 transition-[width,opacity] duration-300 group-hover/volume:w-[64px] group-hover/volume:opacity-100">
-                                <div class="h-full rounded-full bg-blue-500 shadow-[0_0_8px_1px_rgba(59,130,246,0.3)]" style="width: 70%"></div>
+                                <div class="h-full rounded-full bg-blue-500" style="width: 70%"></div>
                             </div>
                         </div>
-                        <button class="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs backdrop-blur-sm transition-all duration-200 hover:bg-white/20 hover:shadow-[0_0_8px_1px_rgba(59,130,246,0.2)]">
+                        <button class="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs backdrop-blur-sm transition-all duration-200 hover:bg-white/20">
                             1x
                         </button>
                     </div>
                     <div class="flex items-center gap-3">
-                        <button class="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs backdrop-blur-sm transition-all duration-200 hover:bg-white/20 hover:shadow-[0_0_8px_1px_rgba(59,130,246,0.2)]">
+                        <button class="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs backdrop-blur-sm transition-all duration-200 hover:bg-white/20">
                             1080p
                         </button>
-                        <button class="rounded-lg p-1.5 transition-all duration-200 hover:bg-white/10 hover:shadow-[0_0_8px_1px_rgba(59,130,246,0.2)]">
+                        <button class="rounded-lg p-1.5 transition-all duration-200 hover:bg-white/10">
                             <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 12h4v2H4v-2zm10 6H4v-2h10v2zm6 0h-4v-2h4v2zm0-4H10v-2h10v2z" />
                             </svg>
                         </button>
-                        <button class="rounded-lg p-1.5 transition-all duration-200 hover:bg-white/10 hover:shadow-[0_0_8px_1px_rgba(59,130,246,0.2)]">
+                        <button class="rounded-lg p-1.5 transition-all duration-200 hover:bg-white/10">
                             <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
                             </svg>
@@ -82,3 +80,34 @@
         </div>
     </div>
 </div>
+
+@code {
+    [Inject] IJSRuntime JS { get; set; }
+    private bool isPlayerInitialized = false;
+
+    private async Task PlayVideo()
+    {
+        if (!isPlayerInitialized)
+        {
+            await JS.InvokeVoidAsync("youtubePlayerInterop.initialize", "KzclmnHJcvs");
+            isPlayerInitialized = true;
+        }
+        await JS.InvokeVoidAsync("youtubePlayerInterop.play");
+    }
+
+    private async Task PauseVideo()
+    {
+        if (isPlayerInitialized)
+        {
+            await JS.InvokeVoidAsync("youtubePlayerInterop.pause");
+        }
+    }
+
+    public void Dispose()
+    {
+        if (isPlayerInitialized)
+        {
+            JS.InvokeVoidAsync("youtubePlayerInterop.destroy");
+        }
+    }
+}
