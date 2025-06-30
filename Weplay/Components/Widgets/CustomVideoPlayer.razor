@@ -2,90 +2,89 @@
 @inject IJSRuntime JS
 
 <div class="relative flex h-full w-full items-center justify-center">
-    <div class="group relative aspect-video w-full max-w-6xl overflow-hidden rounded-lg bg-black shadow-md">
+    <div id="player-container" class="group relative aspect-video w-full max-w-6xl overflow-hidden rounded-lg bg-black shadow-md">
         <div class="relative flex h-full w-full items-center justify-center">
             <div id="youtube-player" class="h-full w-full"></div>
         </div>
-        <div class="bg-gradient-to-t absolute inset-0 flex flex-col from-black/80 via-transparent to-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+
+        <div class="@($"bg-gradient-to-t absolute inset-0 flex flex-col from-black/80 via-transparent to-black/40 transition-opacity duration-300 {(controlsVisible ? "opacity-100" : "opacity-0")}")">
+            <!-- Top Info Overlay -->
             <div class="bg-gradient-to-b from-black/60 to-transparent p-4">
                 <h1 class="mb-1 text-lg font-bold">Sample Video Title</h1>
                 <p class="text-xs text-zinc-300 opacity-90">High quality content • 1080p • 5.2M views</p>
             </div>
+
+            <!-- Center Controls -->
             <div class="flex flex-1 items-center justify-center">
                 <div class="flex items-center gap-6">
-                    <button class="rounded-full border border-white/20 bg-white/10 p-3 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-white/20">
-                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
-                        </svg>
+                    <button class="rounded-full border border-white/20 bg-white/10 p-3 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-white/20" @onclick="SeekBackward">
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
                     </button>
+
                     @if (!isPlaying)
                     {
                         <button class="rounded-full border border-blue-400/50 bg-blue-600 p-5 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-blue-500" @onclick="PlayVideo">
-                            <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M8 5v14l11-7z" />
-                            </svg>
+                            <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                         </button>
                     }
                     else
                     {
                         <button class="rounded-full border border-white/20 bg-white/10 p-5 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-white/20" @onclick="PauseVideo">
-                            <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                            </svg>
+                            <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
                         </button>
                     }
-                    <button class="rounded-full border border-white/20 bg-white/10 p-3 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-white/20" @onclick="PauseVideo">
-                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
-                        </svg>
+
+                    <button class="rounded-full border border-white/20 bg-white/10 p-3 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-white/20" @onclick="SeekForward">
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg>
                     </button>
-                    <div class="hidden rounded-full border border-white/20 bg-white/10 p-5 backdrop-blur-md">
-                        <svg class="h-8 w-8 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                        </svg>
-                    </div>
                 </div>
             </div>
+
+            <!-- Bottom Progress + Controls -->
             <div class="bg-gradient-to-t from-black/80 to-transparent p-4">
-                <div class="mb-3">
-                    <div class="group/progress relative flex-1">
+                <div class="mb-3 flex items-center gap-2">
+                    <div id="progress-bar" class="group/progress relative flex-1" style="touch-action:none; user-select:none;">
                         <div class="h-1 overflow-hidden rounded-full bg-white/20 will-change-transform">
-                            <div class="h-full rounded-full bg-blue-500 transition-all duration-150 group-hover/progress:shadow-md" style="width: @(progressPercentage.ToString("F2"))%"></div>
+                            <div class="h-full rounded-full bg-blue-500 transition-all duration-150 group-hover/progress:shadow-md" style="width:@($"{progressPercentage:F2}%")"></div>
                         </div>
-                        <div class="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white opacity-0 transition-opacity duration-200 group-hover/progress:opacity-100" style="left: @(progressPercentage.ToString("F2"))%; margin-left: -6px;"></div>
+                        <div class="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white opacity-0 transition-opacity duration-200 group-hover/progress:opacity-100" style="left:@($"{progressPercentage:F2}%"); margin-left: -6px;"></div>
                     </div>
                     <span class="min-w-10">@currentTimeString / @totalTimeString</span>
                 </div>
+
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <div class="group/volume flex items-center transition-all duration-300">
-                            <button class="rounded-lg p-1.5 transition-all duration-200 hover:bg-white/10">
-                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
-                                </svg>
+                        <div class="group/volume relative flex items-center transition-all duration-300" @onmouseenter="()=>volumeHovered=true" @onmouseleave="()=>volumeHovered=false">
+                            <button class="rounded-lg p-1.5 transition-all duration-200 hover:bg-white/10" @onclick="ToggleMute" aria-label="Toggle Mute">
+                                @if (isMuted || currentVolume == 0)
+                                {
+                                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM3 9v6h4l5 5V4L7 9H3zm14.5-3.77-1.42-1.42-2.83 2.83-2.83-2.83-1.42 1.42 2.83 2.83-2.83 2.83 1.42 1.42 2.83-2.83 2.83 2.83 1.42-1.42-2.83-2.83 2.83-2.83z" /></svg>
+                                }
+                                else
+                                {
+                                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" /></svg>
+                                }
                             </button>
-                            <div class="ml-2 h-1 w-0 rounded-full bg-white/20 opacity-0 transition-[width,opacity] duration-300 group-hover/volume:w-[64px] group-hover/volume:opacity-100">
-                                <div class="h-full rounded-full bg-blue-500" style="width: 70%"></div>
+                            <div id="volume-slider" class="ml-2 h-1 w-0 cursor-pointer overflow-visible rounded-full bg-white/20 opacity-0 transition-[width,opacity] duration-300 group-hover/volume:w-[64px] group-hover/volume:opacity-100" style="user-select:none;">
+                                <div class="h-full rounded-full bg-blue-500" style="width: @(currentVolume * 100)%"></div>
                             </div>
                         </div>
-                        <button class="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs backdrop-blur-sm transition-all duration-200 hover:bg-white/20">
-                            1x
-                        </button>
+                        <button class="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs backdrop-blur-sm transition-all duration-200 hover:bg-white/20">1x</button>
                     </div>
                     <div class="flex items-center gap-3">
-                        <button class="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs backdrop-blur-sm transition-all duration-200 hover:bg-white/20">
-                            1080p
-                        </button>
+                        <button class="rounded-md px-2 py-1 text-xs text-zinc-500 backdrop-blur-sm">Auto</button>
                         <button class="rounded-lg p-1.5 transition-all duration-200 hover:bg-white/10">
-                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 12h4v2H4v-2zm10 6H4v-2h10v2zm6 0h-4v-2h4v2zm0-4H10v-2h10v2z" />
-                            </svg>
+                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 12h4v2H4v-2zm10 6H4v-2h10v2zm6 0h-4v-2h4v2zm0-4H10v-2h10v2z" /></svg>
                         </button>
-                        <button class="rounded-lg p-1.5 transition-all duration-200 hover:bg-white/10">
-                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
-                            </svg>
+                        <button class="rounded-lg p-1.5 transition-all duration-200 hover:bg-white/10" @onclick="ToggleFullscreen" aria-label="Toggle Fullscreen">
+                            @if (!isFullscreen)
+                            {
+                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" /></svg>
+                            }
+                            else
+                            {
+                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M16 14h2v5h-5v-2h3v-3zm-2-4h-3v3H7v-5h2v2h3v-3h5v5h-3v-2z" /></svg>
+                            }
                         </button>
                     </div>
                 </div>
@@ -99,38 +98,61 @@
     private bool isPlaying = false;
     private double progressPercentage = 0;
     private string currentTimeString = "0:00";
-    private const double TotalDuration = 188.4; // 3.14 minutes in seconds
-    private string totalTimeString;
-    private CancellationTokenSource cts;
+    private const double TotalDuration = 188.4;
+    private string totalTimeString = "";
+    private CancellationTokenSource? cts;
+    private bool isDragging = false;
+    private bool isMuted = false;
+    private double currentVolume = 1.0;
+    private bool volumeHovered = false;
+    private bool isFullscreen = false;
+    private bool controlsVisible = true;
+
+    private DotNetObjectReference<CustomVideoPlayer>? dotnetRef;
 
     protected override void OnInitialized()
     {
-        var totalMinutes = (int)(TotalDuration / 60);
-        var totalSeconds = (int)Math.Round(TotalDuration % 60);
-        totalTimeString = $"{totalMinutes}:{totalSeconds:D2}";
+        totalTimeString = $"{(int)(TotalDuration / 60)}:{(int)(TotalDuration % 60):D2}";
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            dotnetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("youtubePlayerInterop.setDotnetReference", dotnetRef);
+            await JS.InvokeVoidAsync("youtubePlayerInterop.initProgressBar");
+            await JS.InvokeVoidAsync("youtubePlayerInterop.initVolumeSlider");
+            await JS.InvokeVoidAsync("youtubePlayerInterop.registerFullscreenChangeListener");
+            await JS.InvokeVoidAsync("youtubePlayerInterop.initInactivityTracker", "player-container");
+
             cts = new CancellationTokenSource();
             _ = UpdateProgressLoop(cts.Token);
+            await SyncVolumeAndMuteFromJS();
         }
+    }
+
+    private async Task SyncVolumeAndMuteFromJS()
+    {
+        try
+        {
+            currentVolume = await JS.InvokeAsync<double>("youtubePlayerInterop.getVolume");
+            isMuted = await JS.InvokeAsync<bool>("youtubePlayerInterop.getMuted");
+            if (isMuted) currentVolume = 0;
+        }
+        catch { }
     }
 
     private async Task UpdateProgressLoop(CancellationToken token)
     {
         while (!token.IsCancellationRequested)
         {
-            if (isPlayerInitialized)
+            if (!isDragging && isPlayerInitialized)
             {
                 var currentTime = await JS.InvokeAsync<double>("youtubePlayerInterop.getCurrentTime");
-                progressPercentage = Math.Max(0, Math.Min(100, (currentTime / TotalDuration) * 100));
-                var minutes = (int)(currentTime / 60);
-                var seconds = (int)(currentTime % 60);
-                currentTimeString = $"{minutes}:{seconds:D2}";
-                StateHasChanged();
+                progressPercentage = Math.Clamp((currentTime / TotalDuration) * 100, 0, 100);
+                currentTimeString = $"{(int)(currentTime / 60)}:{(int)(currentTime % 60):D2}";
+                await InvokeAsync(StateHasChanged);
             }
             await Task.Delay(100, token);
         }
@@ -158,12 +180,34 @@
         }
     }
 
+    private async Task SeekForward() => await JS.InvokeVoidAsync("youtubePlayerInterop.seekForward");
+    private async Task SeekBackward() => await JS.InvokeVoidAsync("youtubePlayerInterop.seekBackward");
+    private async Task ToggleMute() => await JS.InvokeVoidAsync("youtubePlayerInterop.toggleMute");
+
+    private async Task ToggleFullscreen()
+    {
+        if (!isFullscreen)
+            await JS.InvokeVoidAsync("youtubePlayerInterop.enterFullscreen", "player-container");
+        else
+            await JS.InvokeVoidAsync("youtubePlayerInterop.exitFullscreen");
+    }
+
+    [JSInvokable] public Task OnFullscreenChanged(bool fullscreen) { isFullscreen = fullscreen; return InvokeAsync(StateHasChanged); }
+    [JSInvokable] public Task OnVolumeChanged(double volume) { currentVolume = volume; isMuted = volume == 0; return InvokeAsync(StateHasChanged); }
+    [JSInvokable] public Task OnMuteChanged(bool muted) { isMuted = muted; if (muted) currentVolume = 0; return InvokeAsync(StateHasChanged); }
+    [JSInvokable] public Task SetDragging(bool dragging) { isDragging = dragging; return Task.CompletedTask; }
+
+    [JSInvokable]
+    public Task SetControlsVisible(bool visible)
+    {
+        controlsVisible = visible;
+        return InvokeAsync(StateHasChanged);
+    }
+
     public void Dispose()
     {
         cts?.Cancel();
-        if (isPlayerInitialized)
-        {
-            JS.InvokeVoidAsync("youtubePlayerInterop.destroy");
-        }
+        dotnetRef?.Dispose();
+        _ = JS.InvokeVoidAsync("youtubePlayerInterop.destroy");
     }
 }
