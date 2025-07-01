@@ -1,4 +1,4 @@
-﻿@implements IDisposable
+﻿@using System.Diagnostics
 @inject IJSRuntime JS
 
 <div class="relative flex h-full w-full items-center justify-center">
@@ -94,41 +94,72 @@
 </div>
 
 @code {
-    private bool isPlayerInitialized = false;
-    private bool isPlaying = Config.ROOMSTATE.state.is_playing;
-    private double progressPercentage = 0;
+    public string VideoId { get; set; } = string.Empty;
+    public double TotalDuration { get; set; } = 0;      
+    public double SeekStep { get; set; } = 5;              
+    public int InactivityInterval { get; set; } = 2500;     
+
+    private bool isPlayerInitialized;
+    private bool isPlaying;
+    private double progressPercentage;
     private string currentTimeString = "0:00";
-    private double TotalDuration = Config.ROOMSTATE.content.duration;
     private string totalTimeString = "";
     private CancellationTokenSource? cts;
-    private bool isDragging = false;
-    private bool isMuted = false;
+    private bool isDragging;
+    private bool isMuted;
     private double currentVolume = 1.0;
-    private bool volumeHovered = false;
-    private bool isFullscreen = false;
+    private bool volumeHovered;
+    private bool isFullscreen;
     private bool controlsVisible = true;
 
     private DotNetObjectReference<CustomVideoPlayer>? dotnetRef;
 
     protected override void OnInitialized()
     {
+        var minutes = (int)(TotalDuration / 60);
+        var seconds = (int)(TotalDuration % 60);
+        totalTimeString = $"{minutes}:{seconds:D2}";
+
+        VideoId = ExtractYouTubeVideoId(Config.ROOMSTATE.content.url);
+        TotalDuration = Config.ROOMSTATE.content.duration;
         totalTimeString = $"{(int)(TotalDuration / 60)}:{(int)(TotalDuration % 60):D2}";
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            dotnetRef = DotNetObjectReference.Create(this);
-            await JS.InvokeVoidAsync("youtubePlayerInterop.setDotnetReference", dotnetRef);
-            await JS.InvokeVoidAsync("youtubePlayerInterop.initProgressBar");
-            await JS.InvokeVoidAsync("youtubePlayerInterop.initVolumeSlider");
-            await JS.InvokeVoidAsync("youtubePlayerInterop.registerFullscreenChangeListener");
-            await JS.InvokeVoidAsync("youtubePlayerInterop.initInactivityTracker", "player-container");
+        if (!firstRender) return;
 
-            cts = new CancellationTokenSource();
-            _ = UpdateProgressLoop(cts.Token);
-            await SyncVolumeAndMuteFromJS();
+        dotnetRef = DotNetObjectReference.Create(this);
+
+        // Pass VideoId, TotalDuration, SeekStep, InactivityInterval straight into JS
+        await JS.InvokeVoidAsync("youtubePlayerInterop.initialize", VideoId, TotalDuration, SeekStep, InactivityInterval);
+        await JS.InvokeVoidAsync("youtubePlayerInterop.setDotnetReference", dotnetRef);
+        await JS.InvokeVoidAsync("youtubePlayerInterop.initProgressBar");
+        await JS.InvokeVoidAsync("youtubePlayerInterop.initVolumeSlider");
+        await JS.InvokeVoidAsync("youtubePlayerInterop.registerFullscreenChangeListener");
+        await JS.InvokeVoidAsync("youtubePlayerInterop.initInactivityTracker", "player-container");
+
+        cts = new CancellationTokenSource();
+        _ = UpdateProgressLoop(cts.Token);
+        await SyncVolumeAndMuteFromJS();
+
+        if (Config.ROOMSTATE.state.current_time > 0)
+        {
+            currentTimeString = $"{(int)(Config.ROOMSTATE.state.current_time / 60)}:{(int)(Config.ROOMSTATE.state.current_time % 60):D2}";
+        }
+
+        if (Config.ROOMSTATE.state.current_time > 0 && !Config.ROOMSTATE.state.is_playing)
+        {
+            await JS.InvokeVoidAsync("youtubePlayerInterop.seekAndPause", Config.ROOMSTATE.state.current_time);
+        }
+        else if (Config.ROOMSTATE.state.current_time > 0 && Config.ROOMSTATE.state.is_playing)
+        {
+            await JS.InvokeVoidAsync("youtubePlayerInterop.setCurrentTime", Config.ROOMSTATE.state.current_time);
+            await PlayVideo();
+        }
+        else if (Config.ROOMSTATE.state.is_playing)
+        {
+            await PlayVideo();
         }
     }
 
@@ -162,7 +193,6 @@
     {
         if (!isPlayerInitialized)
         {
-            await JS.InvokeVoidAsync("youtubePlayerInterop.initialize", "44OfYLY9usg");
             isPlayerInitialized = true;
         }
         await JS.InvokeVoidAsync("youtubePlayerInterop.play");
@@ -172,17 +202,15 @@
 
     private async Task PauseVideo()
     {
-        if (isPlayerInitialized)
-        {
-            await JS.InvokeVoidAsync("youtubePlayerInterop.pause");
-            isPlaying = false;
-            StateHasChanged();
-        }
+        if (!isPlayerInitialized) return;
+        await JS.InvokeVoidAsync("youtubePlayerInterop.pause");
+        isPlaying = false;
+        StateHasChanged();
     }
 
-    private async Task SeekForward() => await JS.InvokeVoidAsync("youtubePlayerInterop.seekForward");
-    private async Task SeekBackward() => await JS.InvokeVoidAsync("youtubePlayerInterop.seekBackward");
-    private async Task ToggleMute() => await JS.InvokeVoidAsync("youtubePlayerInterop.toggleMute");
+    private Task SeekForward() => JS.InvokeVoidAsync("youtubePlayerInterop.seekForward").AsTask();
+    private Task SeekBackward() => JS.InvokeVoidAsync("youtubePlayerInterop.seekBackward").AsTask();
+    private Task ToggleMute() => JS.InvokeVoidAsync("youtubePlayerInterop.toggleMute").AsTask();
 
     private async Task ToggleFullscreen()
     {
@@ -192,22 +220,35 @@
             await JS.InvokeVoidAsync("youtubePlayerInterop.exitFullscreen");
     }
 
-    [JSInvokable] public Task OnFullscreenChanged(bool fullscreen) { isFullscreen = fullscreen; return InvokeAsync(StateHasChanged); }
-    [JSInvokable] public Task OnVolumeChanged(double volume) { currentVolume = volume; isMuted = volume == 0; return InvokeAsync(StateHasChanged); }
+    [JSInvokable] public Task OnFullscreenChanged(bool fs) { isFullscreen = fs; return InvokeAsync(StateHasChanged); }
+    [JSInvokable] public Task OnVolumeChanged(double vol) { currentVolume = vol; isMuted = vol == 0; return InvokeAsync(StateHasChanged); }
     [JSInvokable] public Task OnMuteChanged(bool muted) { isMuted = muted; if (muted) currentVolume = 0; return InvokeAsync(StateHasChanged); }
-    [JSInvokable] public Task SetDragging(bool dragging) { isDragging = dragging; return Task.CompletedTask; }
-
-    [JSInvokable]
-    public Task SetControlsVisible(bool visible)
-    {
-        controlsVisible = visible;
-        return InvokeAsync(StateHasChanged);
-    }
+    [JSInvokable] public Task SetDragging(bool drag) { isDragging = drag; return Task.CompletedTask; }
+    [JSInvokable] public Task SetControlsVisible(bool visible) { controlsVisible = visible; return InvokeAsync(StateHasChanged); }
 
     public void Dispose()
     {
         cts?.Cancel();
         dotnetRef?.Dispose();
         _ = JS.InvokeVoidAsync("youtubePlayerInterop.destroy");
+    }
+
+    private string ExtractYouTubeVideoId(string url)
+    {
+        if (string.IsNullOrEmpty(url))
+            return "";
+
+        var uri = new Uri(url);
+        if (uri.Host.Contains("youtube.com"))
+        {
+            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            return query["v"] ?? "";
+        }
+        if (uri.Host.Contains("youtu.be"))
+        {
+            return uri.AbsolutePath.Trim('/');
+        }
+
+        return "";
     }
 }

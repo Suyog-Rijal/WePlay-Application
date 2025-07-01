@@ -16,14 +16,14 @@
     <div class="status-bar-safe-area"></div>
 
     <div id="container" class="fixed inset-0 -z-50 overflow-hidden" style="background-color: #18181BFF;">
-        <canvas id="canvas" class="absolute inset-0 h-full w-full" style="pointer-events: none;"></canvas>
+        <!--<canvas id="canvas" class="absolute inset-0 h-full w-full" style="pointer-events: none;"></canvas>-->
     </div>
 
     <div id="app" class="text-zinc-100"></div>
 
     <script src="_framework/blazor.webview.js" autostart="false"></script>
 
-    <script>
+    <!--<script>
         const BACKGROUND_COLOR = "#18181BFF";
         const NUM_PARTICLES = 50;
         const MIN_SIZE = 0.5;
@@ -378,7 +378,7 @@
             window.removeEventListener("mousemove", handleMouseMove);
             window.removeEventListener("click", handleClick);
         });
-    </script>
+    </script>-->  
 
     <script>
         window.addOutsideClickHandler = (formElement, dropdownElement, dotNetHelper) => {
