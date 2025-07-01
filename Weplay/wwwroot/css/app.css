@@ -145,7 +145,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
 }
 
 
-/*::-webkit-scrollbar {
+::-webkit-scrollbar {
     display: none;
 }
 
@@ -153,7 +153,7 @@ body {
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
-*/
+
 
 
 .animate-shimmer {

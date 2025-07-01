@@ -9,11 +9,9 @@
 @inject RoomService RoomService
 @inject RoomClientService RoomClientService
 
-
 <AuthorizeView>
     <Authorized>
         <div @ref="containerRef" class="flex h-screen w-screen overflow-hidden text-zinc-100">
-
             <div class="absolute top-0 left-0 z-10 p-4">
                 <button @onclick="ShowExitDialogue" class="flex items-center justify-center gap-2 rounded-full text-zinc-600 duration-500 hover:text-zinc-100">
                     <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -31,7 +29,6 @@
             <!-- Left container -->
             <div id="left-container" class="p-2" style="width:@LeftWidth%">
                 <div class="flex h-full w-full flex-col items-center justify-center rounded-lg">
-
                     @if (!Config.ISVIDEOSELECTED)
                     {
                         @if (Config.ISHOST)
@@ -81,26 +78,25 @@
                     {
                         <CustomVideoPlayer />
                     }
-
                 </div>
             </div>
 
             <!-- Resizer -->
             <div role="separator"
-            class="cursor-col-resize border border-zinc-800 hover:border-2 hover:border-zinc-700"
-            @onmousedown="StartResize"
-            style="width: 0.1%"
-            aria-valuenow="@LeftWidth"
-            aria-valuemin="60"
-            aria-valuemax="75"
-            aria-orientation="vertical"
-            aria-label="Resize panels">
+                 class="cursor-col-resize border border-zinc-800 hover:border-2 hover:border-zinc-700"
+                 @onmousedown="StartResize"
+                 style="width: 0.1%"
+                 aria-valuenow="@LeftWidth"
+                 aria-valuemin="60"
+                 aria-valuemax="75"
+                 aria-orientation="vertical"
+                 aria-label="Resize panels">
             </div>
 
             <!-- Right container -->
             <div id="right-container" style="width:@(100 - LeftWidth - 0.1)%">
                 <div class="flex h-full w-full flex-col gap-2 p-2">
-                    <!-- chat header and body unchanged -->
+                    <!-- Chat header -->
                     <div class="chat-glass flex items-center justify-between rounded-t-lg p-3">
                         <h3 class="flex items-center gap-2 text-lg font-semibold">
                             <svg class="h-5 w-5 text-zinc-100" fill="currentColor" viewBox="0 0 24 24">
@@ -117,8 +113,8 @@
                         </button>
                     </div>
 
-                    <div class="chat-glass flex-1 space-y-3 overflow-y-auto rounded-lg p-3">
-                        <!-- chat messages unchanged -->
+                    <!-- Chat messages -->
+                    <div @ref="chatContainer" class="chat-glass flex-1 space-y-3 overflow-y-auto rounded-lg p-3">
                         <div class="flex gap-2">
                             <div class="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-700 text-xs">
                                 <svg class="h-4 w-4 text-zinc-100" fill="currentColor" viewBox="0 0 24 24">
@@ -147,9 +143,8 @@
                                                 <img src="@each.user_profile_picture" alt="User" class="h-8 w-8 rounded-full object-cover object-center" />
                                             }
                                         </div>
-
                                         <div class="flex-1">
-                                            <div class="text-sm font-semibold">@each.full_name<span class="text-xs text-zinc-500">@each.</span></div>
+                                            <div class="text-sm font-semibold">@each.full_name <span class="text-xs text-zinc-500">@each.timestamp</span></div>
                                             <div class="text-sm">@each.message</div>
                                         </div>
                                     </div>
@@ -170,14 +165,18 @@
                                 }
                             }
                         }
-
-
                     </div>
 
+                    <!-- ✅ FIXED Chat input and send button -->
                     <div class="chat-glass rounded-b-lg p-2">
                         <div class="flex gap-2">
-                            <input type="text" placeholder="Type a message..." class="flex-1 rounded-lg bg-zinc-700/70 px-3 py-2 text-sm focus:outline-none">
-                            <button class="rounded-lg bg-zinc-700 px-4 py-2 text-sm hover:bg-zinc-600">
+                            <input type="text"
+                                   @bind-value="messageText"
+                                   @bind-value:event="oninput"
+                                   @onkeydown="HandleKeyDown"
+                                   placeholder="Type a message..."
+                                   class="flex-1 rounded-lg bg-zinc-700/70 px-3 py-2 text-sm focus:outline-none" />
+                            <button @onclick="SendMessage" class="rounded-lg bg-zinc-700 px-4 py-2 text-sm hover:bg-zinc-600">
                                 <svg class="h-4 w-4 text-zinc-100" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                                 </svg>
@@ -189,9 +188,16 @@
         </div>
     </Authorized>
 </AuthorizeView>
+
+<script>
+    function scrollToBottom(element) {
+        element.scrollTop = element.scrollHeight;
+    }
+</script>
+
 @code {
-    // Layout and resizing
     private ElementReference containerRef;
+    private ElementReference chatContainer;
     private double LeftWidth = 70;
     private double MinLeft = 60;
     private double MaxLeft = 75;
@@ -199,19 +205,17 @@
     private double startX;
     private double startLeftWidth;
     private DotNetObjectReference<Room>? dotNetRef;
-    [Parameter]
-    public string RoomId { get; set; }
+    [Parameter] public string RoomId { get; set; }
     private List<MessageDto> messages = new();
+    private string messageText = "";
 
     protected override async Task OnInitializedAsync()
     {
         dotNetRef = DotNetObjectReference.Create(this);
         var res = await RoomService.GetRoomState(RoomId);
-
         if (res != 1)
         {
             Debug.WriteLine($"Error fetching room state: {res}");
-            Debug.WriteLine("This is a gracefull sutdown to prevent further damage.");
             System.Diagnostics.Process.GetCurrentProcess().Kill();
             return;
         }
@@ -220,35 +224,48 @@
         await RoomClientService.ConnectAsync();
     }
 
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(messageText))
+        {
+            await SendMessage();
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(messageText)) return;
+
+        await RoomClientService.SendMessageAsync(messageText);
+        messageText = "";
+    }
+
     private void HandleRoomEvent(string eventType, string data)
     {
         Debug.WriteLine($"Received event: {eventType} with data: {data}");
-        switch (eventType) 
-        {
-            case "system_message":
-                var sysMsg = JsonSerializer.Deserialize<MessageDto>(data);
-                if (sysMsg is null)
-                {
-                    Debug.WriteLine($"Failed to deserialize system message: {data}");
-                    return;
-                }
-                sysMsg.messageType = MessageType.system_message;
-                InvokeAsync(() =>
-                {
-                    messages.Add(sysMsg);
-                    StateHasChanged();
-                });
-                break;
-        }
-	}
+        var msg = JsonSerializer.Deserialize<MessageDto>(data);
+        if (msg is null) return;
 
+        msg.messageType = eventType switch
+        {
+            "system_message" => MessageType.system_message,
+            "chat_message" => MessageType.chat_message,
+            _ => msg.messageType
+        };
+
+        InvokeAsync(() =>
+        {
+            messages.Add(msg);
+            StateHasChanged();
+            JS.InvokeVoidAsync("scrollToBottom", chatContainer);
+        });
+    }
 
     private async Task StartResize(MouseEventArgs e)
     {
         isDragging = true;
         startX = e.ClientX;
         startLeftWidth = LeftWidth;
-
         await JS.InvokeVoidAsync("setupResize", containerRef, dotNetRef);
     }
 
@@ -256,12 +273,10 @@
     public async Task OnMouseMove(double clientX)
     {
         if (!isDragging) return;
-
         var deltaX = clientX - startX;
         var containerWidth = await JS.InvokeAsync<double>("getContainerWidth", containerRef);
         var deltaWidth = (deltaX / containerWidth) * 100;
         var newLeftWidth = startLeftWidth + deltaWidth;
-
         LeftWidth = Math.Clamp(newLeftWidth, MinLeft, MaxLeft);
         await InvokeAsync(StateHasChanged);
     }
@@ -276,20 +291,10 @@
     public void Dispose()
     {
         dotNetRef?.Dispose();
+        RoomClientService.OnRoomEventReceived -= HandleRoomEvent;
     }
 
-
-
-
-    // Room exit controls
     private bool isExitConfirmationVisible = false;
-    private void CloseConfirmationDialog()
-    {
-        isExitConfirmationVisible = false;
-    }
-    private void ShowExitDialogue()
-    {
-		isExitConfirmationVisible = true;
-    }
-
+    private void CloseConfirmationDialog() => isExitConfirmationVisible = false;
+    private void ShowExitDialogue() => isExitConfirmationVisible = true;
 }

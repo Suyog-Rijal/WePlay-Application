@@ -95,5 +95,23 @@ namespace Weplay.Services
             }
         }
 
+        public async Task SendMessageAsync(string message)
+        {
+            if (_client == null || _client.State != WebSocketState.Open)
+                return;
+
+            var payload = new
+            {
+                type = "chat_message",
+                message = message
+            };
+
+            string json = JsonSerializer.Serialize(payload);
+            var bytes = Encoding.UTF8.GetBytes(json);
+            var segment = new ArraySegment<byte>(bytes);
+
+            await _client.SendAsync(segment, WebSocketMessageType.Text, true, _cts.Token);
+        }
+
     }
 }
