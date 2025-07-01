@@ -10,8 +10,8 @@
         <div class="@($"bg-gradient-to-t absolute inset-0 flex flex-col from-black/80 via-transparent to-black/40 transition-opacity duration-300 {(controlsVisible ? "opacity-100" : "opacity-0")}")">
             <!-- Top Info Overlay -->
             <div class="bg-gradient-to-b from-black/60 to-transparent p-4">
-                <h1 class="mb-1 text-lg font-bold">Sample Video Title</h1>
-                <p class="text-xs text-zinc-300 opacity-90">High quality content • 1080p • 5.2M views</p>
+                <h1 class="mb-1 text-lg font-bold">@Config.ROOMSTATE.content.title</h1>
+                <p class="text-xs text-zinc-300 opacity-90">High quality content • 1080p</p>
             </div>
 
             <!-- Center Controls -->
@@ -44,10 +44,10 @@
             <div class="bg-gradient-to-t from-black/80 to-transparent p-4">
                 <div class="mb-3 flex items-center gap-2">
                     <div id="progress-bar" class="group/progress relative flex-1" style="touch-action:none; user-select:none;">
-                        <div class="h-1 overflow-hidden rounded-full bg-white/20 will-change-transform">
+                        <div class="h-1 rounded-full bg-white/20 transition-all duration-200 group-hover/progress:h-2 group-hover/progress:bg-white/30">
                             <div class="h-full rounded-full bg-blue-500 transition-all duration-150 group-hover/progress:shadow-md" style="width:@($"{progressPercentage:F2}%")"></div>
                         </div>
-                        <div class="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white opacity-0 transition-opacity duration-200 group-hover/progress:opacity-100" style="left:@($"{progressPercentage:F2}%"); margin-left: -6px;"></div>
+                        <div class="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white opacity-0 shadow-md transition-all duration-200 group-hover/progress:h-4 group-hover/progress:w-4 group-hover/progress:opacity-100" style="left:@($"{progressPercentage:F2}%"); margin-left: -8px;"></div>
                     </div>
                     <span class="min-w-10">@currentTimeString / @totalTimeString</span>
                 </div>
