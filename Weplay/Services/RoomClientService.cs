@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Weplay.Dtos.Message;
 using Weplay.Dtos.Room;
 
 namespace Weplay.Services
@@ -16,6 +17,8 @@ namespace Weplay.Services
         private Task _receiveTask;
 
         public event Action<string, string> OnRoomEventReceived;
+        public bool IsConnected => _client != null && _client.State == WebSocketState.Open;
+
         public async Task ConnectAsync()
         {
             if (_client != null && _client.State == WebSocketState.Open)
@@ -112,6 +115,21 @@ namespace Weplay.Services
 
             await _client.SendAsync(segment, WebSocketMessageType.Text, true, _cts.Token);
         }
+
+        public async Task SendRoomStateUpdateAsync(RoomStateUpdateDto update)
+        {
+            if (_client == null || _client.State != WebSocketState.Open)
+                return;
+
+            var json = JsonSerializer.Serialize(update);
+
+            var bytes = Encoding.UTF8.GetBytes(json);
+            var segment = new ArraySegment<byte>(bytes);
+
+            await _client.SendAsync(segment, WebSocketMessageType.Text, true, _cts.Token);
+        }
+
+
 
     }
 }

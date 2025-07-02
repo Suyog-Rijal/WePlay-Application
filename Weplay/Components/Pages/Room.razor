@@ -242,7 +242,19 @@
 
     private void HandleRoomEvent(string eventType, string data)
     {
-        Debug.WriteLine($"Received event: {eventType} with data: {data}");
+        switch (eventType)
+        {
+            case "chat_message":
+            case "system_message":
+                HandleMessageEvent(eventType, data);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void HandleMessageEvent(string eventType, string data)
+    {
         var msg = JsonSerializer.Deserialize<MessageDto>(data);
         if (msg is null) return;
 

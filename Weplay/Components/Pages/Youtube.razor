@@ -18,6 +18,14 @@
                     </div>
                     <span class="hidden text-xl font-medium sm:block">Play</span>
                 </div>
+
+                <button @onclick="GoBack" class="flex items-center justify-center gap-2 rounded-full text-zinc-600 duration-500 hover:text-zinc-100">
+                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+                    </svg>
+                    Back
+                </button>
+
             </div>
 
             <!-- Center: Search Bar -->
@@ -143,5 +151,10 @@
             return;
         }
 
+    }
+
+    private async Task GoBack()
+    {
+        await JS.InvokeVoidAsync("history.back");
     }
 }

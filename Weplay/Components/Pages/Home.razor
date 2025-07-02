@@ -6,6 +6,7 @@
 @inject RoomService RoomService
 @using Weplay.Components.Widgets
 @inject HomeClientService HomeClientService
+@inject RoomClientService RoomClientService
 @implements IDisposable
 
 
@@ -322,10 +323,16 @@
 
     protected override async Task OnInitializedAsync()
     {
+
         isLoading = true;
         rooms = await RoomService.GetRoomsAsync();
         HomeClientService.OnHomeEventReceived += HandleRoomEvent;
-        await HomeClientService.ConnectAsync(); isLoading = false;
+        await HomeClientService.ConnectAsync();
+        if (RoomClientService.IsConnected)
+        {
+            RoomClientService.DisconnectAsync();
+        }
+        isLoading = false;
     }
 
     private void handleLogout()

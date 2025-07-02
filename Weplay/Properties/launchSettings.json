@@ -1,8 +1,8 @@
 {
-  "profiles": {
-    "Windows Machine": {
-      "commandName": "Project",
-      "nativeDebugging": false
+    "profiles": {
+        "Weplay Instance": {
+            "commandName": "Project"
+           
+        }
     }
-  }
 }

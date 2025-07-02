@@ -1,5 +1,9 @@
-﻿@using System.Diagnostics
+﻿HEre in current sisuaton any one can like udapte the progrss abr of the vidoe. but i wanna only host to have that control
+@using System.Diagnostics
 @inject IJSRuntime JS
+@using Weplay.Dtos.Message
+@using Weplay.Services
+@inject RoomClientService RoomClientService
 
 <div class="relative flex h-full w-full items-center justify-center">
     <div id="player-container" class="group relative aspect-video w-full max-w-6xl overflow-hidden rounded-lg bg-black shadow-md">
@@ -15,30 +19,33 @@
             </div>
 
             <!-- Center Controls -->
-            <div class="flex flex-1 items-center justify-center">
-                <div class="flex items-center gap-6">
-                    <button class="rounded-full border border-white/20 bg-white/10 p-3 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-white/20" @onclick="SeekBackward">
-                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
-                    </button>
-
-                    @if (!isPlaying)
-                    {
-                        <button class="rounded-full border border-blue-400/50 bg-blue-600 p-5 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-blue-500" @onclick="PlayVideo">
-                            <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+            @if (Config.ISHOST)
+            {
+                <div class="flex flex-1 items-center justify-center">
+                    <div class="flex items-center gap-6">
+                        <button class="rounded-full border border-white/20 bg-white/10 p-3 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-white/20" @onclick="SeekBackward">
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" /></svg>
                         </button>
-                    }
-                    else
-                    {
-                        <button class="rounded-full border border-white/20 bg-white/10 p-5 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-white/20" @onclick="PauseVideo">
-                            <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
-                        </button>
-                    }
 
-                    <button class="rounded-full border border-white/20 bg-white/10 p-3 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-white/20" @onclick="SeekForward">
-                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg>
-                    </button>
+                        @if (!isPlaying)
+                        {
+                            <button class="rounded-full border border-blue-400/50 bg-blue-600 p-5 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-blue-500" @onclick="PlayVideo">
+                                <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="rounded-full border border-white/20 bg-white/10 p-5 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-white/20" @onclick="PauseVideo">
+                                <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+                            </button>
+                        }
+
+                        <button class="rounded-full border border-white/20 bg-white/10 p-3 backdrop-blur-md transition-transform duration-200 hover:scale-105 hover:bg-white/20" @onclick="SeekForward">
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg>
+                        </button>
+                    </div>
                 </div>
-            </div>
+            }
 
             <!-- Bottom Progress + Controls -->
             <div class="bg-gradient-to-t from-black/80 to-transparent p-4">
@@ -73,9 +80,14 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <button class="rounded-md px-2 py-1 text-xs text-zinc-500 backdrop-blur-sm">Auto</button>
-                        <button class="rounded-lg p-1.5 transition-all duration-200 hover:bg-white/10">
-                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 12h4v2H4v-2zm10 6H4v-2h10v2zm6 0h-4v-2h4v2zm0-4H10v-2h10v2z" /></svg>
-                        </button>
+                        @if (Config.ISHOST)
+                        {
+                            <a href="/youtube" class="rounded-lg p-1.5 transition-all duration-200 hover:bg-white/10">
+                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M19.615 3.184C21.348 3.73 22 5.056 22 8v8c0 2.944-.652 4.27-2.385 4.816C17.35 21.5 12 21.5 12 21.5s-5.35 0-7.615-.684C2.652 20.27 2 18.944 2 16V8c0-2.944.652-4.27 2.385-4.816C6.65 2.5 12 2.5 12 2.5s5.35 0 7.615.684zM10 9.5v5l4.5-2.5L10 9.5z" />
+                                </svg>
+                            </a>
+                        }
                         <button class="rounded-lg p-1.5 transition-all duration-200 hover:bg-white/10" @onclick="ToggleFullscreen" aria-label="Toggle Fullscreen">
                             @if (!isFullscreen)
                             {
@@ -95,9 +107,9 @@
 
 @code {
     public string VideoId { get; set; } = string.Empty;
-    public double TotalDuration { get; set; } = 0;      
-    public double SeekStep { get; set; } = 5;              
-    public int InactivityInterval { get; set; } = 2500;     
+    public double TotalDuration { get; set; } = 0;
+    public double SeekStep { get; set; } = 5;
+    public int InactivityInterval { get; set; } = 2500;
 
     private bool isPlayerInitialized;
     private bool isPlaying;
@@ -111,6 +123,8 @@
     private bool volumeHovered;
     private bool isFullscreen;
     private bool controlsVisible = true;
+    private CancellationTokenSource? regularSyncCts;
+
 
     private DotNetObjectReference<CustomVideoPlayer>? dotnetRef;
 
@@ -161,6 +175,13 @@
         {
             await PlayVideo();
         }
+
+        if (Config.ISHOST)
+        {
+            regularSyncCts = new CancellationTokenSource();
+            _ = RegularSyncLoop(regularSyncCts.Token);
+        }
+
     }
 
     private async Task SyncVolumeAndMuteFromJS()
@@ -198,18 +219,32 @@
         await JS.InvokeVoidAsync("youtubePlayerInterop.play");
         isPlaying = true;
         StateHasChanged();
+
+        await SendRoomStateActionUpdateAsync();
     }
 
     private async Task PauseVideo()
     {
         if (!isPlayerInitialized) return;
+
         await JS.InvokeVoidAsync("youtubePlayerInterop.pause");
         isPlaying = false;
         StateHasChanged();
+
+        await SendRoomStateActionUpdateAsync();
     }
 
-    private Task SeekForward() => JS.InvokeVoidAsync("youtubePlayerInterop.seekForward").AsTask();
-    private Task SeekBackward() => JS.InvokeVoidAsync("youtubePlayerInterop.seekBackward").AsTask();
+    private async Task SeekForward()
+    {
+        await JS.InvokeVoidAsync("youtubePlayerInterop.seekForward");
+        await SendRoomStateActionUpdateAsync();
+    }
+
+    private async Task SeekBackward()
+    {
+        await JS.InvokeVoidAsync("youtubePlayerInterop.seekBackward");
+        await SendRoomStateActionUpdateAsync();
+    }
     private Task ToggleMute() => JS.InvokeVoidAsync("youtubePlayerInterop.toggleMute").AsTask();
 
     private async Task ToggleFullscreen()
@@ -229,6 +264,7 @@
     public void Dispose()
     {
         cts?.Cancel();
+        regularSyncCts?.Cancel();
         dotnetRef?.Dispose();
         _ = JS.InvokeVoidAsync("youtubePlayerInterop.destroy");
     }
@@ -251,4 +287,43 @@
 
         return "";
     }
+
+    private async Task SendRoomStateActionUpdateAsync()
+    {
+        var currentTime = await JS.InvokeAsync<double>("youtubePlayerInterop.getCurrentTime");
+        var updateDto = new RoomStateUpdateDto
+            {
+                mode = StateUpdateType.action,
+                is_playing = isPlaying,
+                current_time = (int)currentTime,
+            };
+
+        await RoomClientService.SendRoomStateUpdateAsync(updateDto);
+    }
+
+    private async Task RegularSyncLoop(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            try
+            {
+                var currentTime = await JS.InvokeAsync<double>("youtubePlayerInterop.getCurrentTime");
+                var regularUpdateDto = new RoomStateUpdateDto
+                    {
+                        mode = StateUpdateType.regular,
+                        is_playing = isPlaying,
+                        current_time = (int)currentTime,
+                    };
+
+                await RoomClientService.SendRoomStateUpdateAsync(regularUpdateDto);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error sending regular sync update: {ex.Message}");
+            }
+
+            await Task.Delay(5000, token);
+        }
+    }
+
 }

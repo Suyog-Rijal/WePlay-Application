@@ -79,7 +79,7 @@ window.youtubePlayerInterop = {
             setTimeout(() => {
                 ytPlayer.pauseVideo();
                 resolve();
-            }, 300); 
+            }, 300);
         });
     },
     seekForward() {
@@ -253,4 +253,3 @@ function debounce(fn, delay) {
         t = setTimeout(() => fn(...args), delay);
     };
 }
-s
